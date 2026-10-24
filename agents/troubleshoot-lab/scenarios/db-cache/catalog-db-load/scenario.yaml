@@ -1,0 +1,22 @@
+id: catalog-db-load
+curriculum_no: '13'
+fields:
+- db-cache
+env: compose
+title: 상품 조회가 매번 DB까지 가요
+difficulty: intermediate
+minutes: 40
+symptom: localhost:8080/api/catalog/1 같은 상품 조회가 같은 상품을 여러 번 불러도 빨라지지 않아요. DB 부하가 평소보다 높아요.
+tags:
+- cache-ttl
+- hit-ratio
+- cache-aside
+warmups:
+- redis-cli-basics
+- cache-headers
+start_hint: for i in 1 2 3; do curl -s -o /dev/null -D - localhost:8080/api/catalog/1 | grep -i x-cache; done
+measure:
+  path: /api/catalog/1
+  service: api
+interview:
+- 캐시를 적용했는데도 서버에 부하가 몰리는 이유는 무엇인가요?

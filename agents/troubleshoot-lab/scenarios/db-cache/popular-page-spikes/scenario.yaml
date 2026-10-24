@@ -1,0 +1,25 @@
+id: popular-page-spikes
+curriculum_no: '14'
+fields:
+- db-cache
+- monitoring
+env: compose
+title: 인기 페이지가 주기적으로 느려져요
+difficulty: advanced
+minutes: 50
+symptom: localhost:8080/api/popular 가 대부분 빠른데, 사용자가 많을 때 몇 초마다 한 번씩 모든 요청이 동시에 느려져요.
+tags:
+- cache-stampede
+- thundering-herd
+- lock
+- jitter
+warmups:
+- redis-cli-basics
+- k6-basics
+start_hint: curl -s -o /dev/null -D - localhost:8080/api/popular | grep -i x-cache
+measure:
+  path: /api/popular
+  service: api
+  vus: 30
+interview:
+- 캐시를 적용했는데도 서버에 부하가 몰리는 이유는 무엇인가요?

@@ -1,0 +1,29 @@
+# 21-day learning plan (docs/curriculum.md §5, data-model.md Plan).
+# items: first = main item, second = "시간이 남으면". pool: composite day, one picked at post time.
+# Each day's main item + its warmups must total 60-90 minutes (`lab validate` checks this).
+days:
+  # Week 1: 네트워크와 리눅스
+  - {day: 1, week: 1, topic: "TCP/IP, OSI 7계층", practice: "웹사이트 접속 과정 설명", items: [concept-web-request-flow]}
+  - {day: 2, week: 1, topic: "TCP 연결과 소켓", practice: "ss, nc로 연결 확인", items: [site-connection-refused]}
+  - {day: 3, week: 1, topic: "DNS, HTTP, HTTPS", practice: "dig, curl -v", items: [api-partial-errors]}
+  - {day: 4, week: 1, topic: "포트와 방화벽", practice: "포트 접근 실패 재현", items: [site-hangs]}
+  - {day: 5, week: 1, topic: "리눅스 프로세스", practice: "top, ps로 프로세스와 LISTEN 주소 확인", items: [api-unreachable-via-proxy]}
+  - {day: 6, week: 1, topic: "메모리와 디스크", practice: "free, vmstat, df", items: [api-keeps-dying, saves-start-failing]}
+  - {day: 7, week: 1, topic: "종합 트러블슈팅", practice: "서버 접속 장애 분석", pool: [api-unreachable-via-proxy, api-partial-errors, site-connection-refused, site-hangs]}
+  # Week 2: 웹 서버와 부하 테스트
+  - {day: 8, week: 2, topic: "Nginx와 리버스 프록시", practice: "Nginx → FastAPI 연결", items: [concept-reverse-proxy]}
+  - {day: 9, week: 2, topic: "502, 504 오류", practice: "업스트림 장애 재현", items: [api-bad-gateway, report-gateway-timeout]}
+  - {day: 10, week: 2, topic: "CPU 과부하", practice: "부하 전후 메트릭 비교", items: [api-slow-under-load]}
+  - {day: 11, week: 2, topic: "타임아웃", practice: "클라이언트·서버 타임아웃 비교", items: [report-gateway-timeout]}
+  - {day: 12, week: 2, topic: "TCP 상태", practice: "CLOSE_WAIT, TIME_WAIT 분석", items: [api-degrades-over-time, errors-under-traffic]}
+  - {day: 13, week: 2, topic: "동시 요청 처리", practice: "k6 부하 테스트", items: [errors-under-traffic]}
+  - {day: 14, week: 2, topic: "장애 종합 분석", practice: "응답 지연 원인 분석 보고서 작성", items: [https-errors]}
+  # Week 3: 데이터베이스와 캐시
+  - {day: 15, week: 3, topic: "PostgreSQL 연결 구조", practice: "연결 수와 쿼리 확인", items: [concept-postgres-connections]}
+  - {day: 16, week: 3, topic: "커넥션 풀", practice: "연결 대기와 타임아웃 분석", items: [api-waits-for-db]}
+  - {day: 17, week: 3, topic: "느린 쿼리", practice: "인덱스 적용 전후 비교", items: [orders-slow]}
+  - {day: 18, week: 3, topic: "Redis 기초", practice: "캐시 적용", items: [concept-redis-basics]}
+  - {day: 19, week: 3, topic: "Cache Hit/Miss", practice: "캐시 적중률 측정", items: [catalog-db-load]}
+  - {day: 20, week: 3, topic: "캐시 만료", practice: "Cache Stampede 재현", items: [popular-page-spikes]}
+  - {day: 21, week: 3, topic: "종합 장애", practice: "DB 부하와 캐시의 관계 분석", items: [checkout-sometimes-times-out, k8s-api-crashing]}
+extras: [k8s-api-no-response, k8s-bad-release, web-api-404, web-stale-data, web-wrong-profile]

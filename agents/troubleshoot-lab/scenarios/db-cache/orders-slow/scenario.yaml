@@ -1,0 +1,24 @@
+id: orders-slow
+curriculum_no: '19'
+fields:
+- db-cache
+- monitoring
+env: compose
+title: 주문 내역 조회가 느려졌어요
+difficulty: advanced
+minutes: 50
+symptom: localhost:8080/api/orders?customer=42 같은 주문 내역 조회가 예전보다 눈에 띄게 느려졌어요. 오류는 없고 다른 API는 빨라요.
+tags:
+- index
+- seq-scan
+- explain
+- slow-query
+warmups:
+- psql-basics
+- curl-timing
+start_hint: curl -s -w '\ntotal=%{time_total}\n' 'localhost:8080/api/orders?customer=42'
+measure:
+  path: /api/orders?customer=42
+  service: postgres
+interview:
+- TCP 연결은 성공했는데 HTTP 요청이 계속 느리거나 타임아웃되는 이유는 무엇일까요?

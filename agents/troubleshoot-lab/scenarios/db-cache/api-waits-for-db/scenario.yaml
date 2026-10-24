@@ -1,0 +1,24 @@
+id: api-waits-for-db
+curriculum_no: '12'
+fields:
+- db-cache
+- webserver
+env: compose
+title: 몇 번 쓰고 나면 API가 멈춰요
+difficulty: intermediate
+minutes: 45
+symptom: localhost:8080/api/items 가 처음 몇 번은 잘 되다가, 그 뒤로는 2초쯤 기다린 끝에 503 Service Unavailable 을 돌려줘요.
+tags:
+- connection-pool
+- connection-leak
+- pool-timeout
+warmups:
+- psql-basics
+- k6-basics
+start_hint: for i in 1 2 3 4 5; do curl -s -o /dev/null -w '%{http_code} %{time_total}\n' localhost:8080/api/items; done
+measure:
+  path: /api/items
+  service: api
+interview:
+- 데이터베이스 연결 수가 최대치에 도달하면 어떻게 해결하나요?
+- DB 최대 연결 수를 늘리는 것이 좋은 해결책인가요?

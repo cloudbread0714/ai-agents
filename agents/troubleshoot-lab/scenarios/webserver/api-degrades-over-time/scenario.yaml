@@ -1,0 +1,24 @@
+id: api-degrades-over-time
+curriculum_no: '10'
+fields:
+- webserver
+- linux
+env: compose
+title: 시간이 지날수록 API가 망가져요
+difficulty: intermediate
+minutes: 45
+symptom: localhost:8080/api/upstream 이 처음엔 잘 되다가, 요청이 쌓이면 500 오류가 나기 시작해요. api를 재시작하면 한동안 괜찮아요.
+tags:
+- close-wait
+- socket-leak
+- fd
+warmups:
+- tcp-states
+- socket-check
+start_hint: curl -i localhost:8080/api/upstream
+measure:
+  path: /api/upstream
+  service: api
+interview:
+- CLOSE_WAIT가 계속 늘어나면 무엇을 의심해야 하나요?
+- TIME_WAIT가 많은 것은 문제인가요?

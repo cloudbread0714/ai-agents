@@ -1,0 +1,25 @@
+id: checkout-sometimes-times-out
+curriculum_no: '20'
+fields:
+- webserver
+- monitoring
+env: compose
+title: 결제가 가끔 시간 초과로 실패해요
+difficulty: advanced
+minutes: 45
+symptom: localhost:8080/api/checkout 이 대부분 바로 성공하는데, 열 번에 서너 번은 3초쯤 기다린 끝에 504가 나요.
+tags:
+- external-dependency
+- client-timeout
+- fallback
+- tail-latency
+warmups:
+- proxy-errors
+- k6-basics
+start_hint: for i in $(seq 10); do curl -s -o /dev/null -w '%{http_code} %{time_total}\n' localhost:8080/api/checkout; done
+measure:
+  path: /api/checkout
+  service: api
+interview:
+- TCP 연결은 성공했는데 HTTP 요청이 계속 느리거나 타임아웃되는 이유는 무엇일까요?
+- 타임아웃을 늘리는 것이 항상 올바른 해결책인가요?

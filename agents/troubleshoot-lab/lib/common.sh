@@ -90,6 +90,21 @@ http_code() {
   curl -s -o /dev/null -w '%{http_code}' --max-time 5 "$@" || true
 }
 
+# http_burst <count> <parallel> <url> [curl args...]: send count requests, at most parallel
+# at once; prints one status code per line (000 = no response).
+http_burst() {
+  local count=$1 parallel=$2 url=$3 i
+  shift 3
+  local urls=()
+  for ((i = 0; i < count; i++)); do urls+=("$url" -o /dev/null); done
+  curl -s --parallel --parallel-max "$parallel" --max-time 5 -w '%{http_code}\n' "$@" "${urls[@]}" || true
+}
+
+# http_burst_ok <count> <parallel> <url> [curl args...]: true when every request returned 200.
+http_burst_ok() {
+  ! http_burst "$@" | grep -qv '^200$'
+}
+
 rand_token() {
   od -An -N4 -tx1 /dev/urandom | tr -d ' \n'
 }

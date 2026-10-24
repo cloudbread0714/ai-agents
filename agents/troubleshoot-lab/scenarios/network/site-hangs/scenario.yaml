@@ -1,0 +1,25 @@
+id: site-hangs
+curriculum_no: '4'
+fields:
+- network
+- linux
+env: compose
+title: 웹사이트가 응답 없이 멈춰요
+difficulty: intermediate
+minutes: 45
+symptom: localhost:8080 로 요청하면 거부도 오류도 없이 한참 기다리다 시간 초과가 나요. 컨테이너는 모두 Up 상태예요.
+tags:
+- iptables
+- drop
+- firewall
+- timeout
+warmups:
+- curl-timing
+- socket-check
+start_hint: curl -v --max-time 5 localhost:8080/healthz
+measure:
+  path: /healthz
+  service: nginx
+interview:
+- Connection Refused와 Connection Timeout은 어떻게 다른가요?
+- ping이 실패하면 서버에 접속할 수 없는 건가요?
