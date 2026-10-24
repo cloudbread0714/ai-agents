@@ -1,0 +1,27 @@
+# Python / uv
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+dist/
+build/
+*.egg-info/
+
+# Secrets (constitution IV) — commit only .env.example
+.env
+.env.*
+!.env.example
+
+# Claude Code local settings
+.claude/settings.local.json
+
+# Personal data (constitution: job-apply)
+agents/job-apply/data/private/
+*.resume.*
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
