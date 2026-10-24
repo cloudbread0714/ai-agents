@@ -8,6 +8,7 @@ or a previous value (FR-017, SC-004).
 from __future__ import annotations
 
 import json
+import os
 import re
 import subprocess
 import threading
@@ -145,7 +146,9 @@ class Measurer:
     def _k6_command(self, scenario: Scenario, out: Path) -> list[str]:
         spec = scenario.measure
         net = KIND_NETWORK if scenario.env == "kind" else COMPOSE_NETWORK
-        cmd = ["docker", "run", "--rm", "--network", net, "-v", f"{out}:/out"]
+        # k6's image user cannot write to a host-owned bind mount on Linux; run as the host user.
+        cmd = ["docker", "run", "--rm", "--user", f"{os.getuid()}:{os.getgid()}"]
+        cmd += ["--network", net, "-v", f"{out}:/out"]
         cmd += ["-v", f"{self.lab_root / 'environment' / 'k6'}:/scripts:ro"]
         if spec.scheme == "https":
             certs = self.lab_root / ".lab-state" / "certs"

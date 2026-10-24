@@ -1,4 +1,5 @@
 import json
+import os
 import subprocess
 from pathlib import Path
 
@@ -107,6 +108,7 @@ def test_measurer_runs_k6_on_the_lab_network_and_samples(tmp_path):
     assert guard == ["compose"]
     k6 = next(c for c, _ in cmd.calls if K6_IMAGE in c)
     assert k6[k6.index("--network") + 1] == "troubleshoot-lab_lab"
+    assert k6[k6.index("--user") + 1] == f"{os.getuid()}:{os.getgid()}"  # writable /out on Linux
     assert "TARGET_URL=http://nginx/api/items" in k6 and "VUS=2" in k6 and "DURATION=5s" in k6
     timeout = next(t for c, t in cmd.calls if K6_IMAGE in c)
     assert timeout == 25

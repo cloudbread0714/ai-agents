@@ -24,7 +24,7 @@ steps:
   prompt: CPU를 가장 많이 쓰는 프로세스의 COMMAND 를 입력하세요(경로째 붙여도 돼요)
 - id: kill
   guide: |
-    찾은 프로세스의 PID 로 종료 신호(기본 SIGTERM)를 보내세요. 아래 명령의 `<PID>` 를 위에서 본 숫자로 바꾸면 돼요.
-    끝낸 뒤 `/lab-check kill` 로 확인해요.
-  command: agents/troubleshoot-lab/bin/lab exec api -- kill <PID>
+    찾은 프로세스의 PID(`ps aux` 의 두 번째 열)로 종료 신호(기본 SIGTERM)를 보내세요. 손으로 칠 때는 `kill 1234` 처럼 숫자를 넣어요.
+    아래 명령은 CPU 순으로 정렬한 맨 위 줄의 PID를 골라 `kill` 에 넘겨요. 끝낸 뒤 `/lab-check kill` 로 확인해요.
+  command: agents/troubleshoot-lab/bin/lab exec api -- 'kill $(ps aux --sort=-%cpu | awk "NR == 2 {print \$2}")'
   check: state

@@ -5,8 +5,8 @@ override가 api에 `LOG_VERBOSE=1` 을 넣어 요청마다 약 180 KB의 로그�
 ## 해결
 
 1. `docker compose logs api` 에서 `No space left on device` 를 찾아요.
-2. `/lab-exec api df -h` 로 `/var/log/app` 이 100%인 것을 확인해요.
-3. `du` 로 `app.log` 가 공간을 다 쓴 것을 확인해요.
+2. `docker compose exec -T api df -h` 로 `/var/log/app` 이 100%인 것을 확인해요.
+3. `docker compose exec -T api sh -c 'du -sh /var/log/app/*'` 로 `app.log` 가 공간을 다 쓴 것을 확인해요.
 4. `docker compose config api` 에서 `LOG_VERBOSE` 를 찾고 `agents/troubleshoot-lab/.lab-state/work/compose.override.yaml` 에서 지운 뒤 `docker compose up -d api`.
 
 ## 배운 점

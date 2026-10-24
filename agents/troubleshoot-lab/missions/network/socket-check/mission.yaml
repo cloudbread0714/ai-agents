@@ -24,7 +24,7 @@ steps:
   prompt: succeeded 와 refused 중 어느 단어가 나왔나요?
 - id: closed
   guide: 이번에는 아무도 듣지 않는 포트(6380)예요. 상대 호스트는 살아 있지만 그 포트에 프로세스가 없으면 '연결 거부'가 돼요.
-  command: agents/troubleshoot-lab/bin/lab exec api -- nc -vz -w 2 redis 6380
+  command: agents/troubleshoot-lab/bin/lab exec api -- 'nc -vz -w 2 redis 6380; echo "exit=$?"'
   check: answer
   prompt: succeeded 와 refused 중 어느 단어가 나왔나요?
 - id: summary

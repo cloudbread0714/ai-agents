@@ -11,9 +11,11 @@ docker compose logs --tail 20 api
 "No space left on device"는 디스크가 꽉 찼다는 뜻이에요. api 컨테이너 안에서 어느 파일 시스템이 찼는지, 무엇이 공간을 차지하는지 보세요.
 
 ```
-/lab-exec api df -h
-/lab-exec api du -sh /proc/1/root/var/log/app/*
+docker compose exec -T api df -h
+docker compose exec -T api sh -c 'du -sh /var/log/app/*'
 ```
+
+(진단 컨테이너(`/lab-exec`)는 api의 네트워크·프로세스는 보지만 파일 시스템은 따로라, 디스크는 api 컨테이너 안에서 직접 봐요.)
 
 ## 힌트 3
 
