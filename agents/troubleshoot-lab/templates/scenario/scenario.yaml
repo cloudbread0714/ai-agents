@@ -1,8 +1,23 @@
-# 복사 후: 디렉터리 이름 = id. id·title·symptom 에 원인을 드러내는 단어를 쓰지 마세요.
+# 복사 후: 디렉터리 이름 = id, 상위 디렉터리 = 대표 분야(fields 의 첫 번째).
+# id·title·symptom 에 원인을 드러내는 단어(tags 에 쓴 말)를 쓰지 마세요.
 id: my-symptom-name
+curriculum_no: '1'          # 커리큘럼 번호: "3", "18-B", 심화는 "extra-4" (카탈로그 전체에서 유일)
+fields: [network]           # 1~3개: network | linux | webserver | db-cache | lb-cloud | monitoring
+env: compose                # 장애를 넣을 환경: compose | kind
 title: 증상을 설명하는 제목
 difficulty: beginner        # beginner | intermediate | advanced
+minutes: 40                 # 20~90. 이 값 + 연결 워밍업 minutes 합이 하루 60~90분이 되게
 symptom: 사용자가 보게 될 증상 (Slack에 그대로 게시돼요)
 tags: [cause-keyword]       # 작성자용. 어디에도 게시되지 않아요
-warmups: [some-mission]     # 1~2개, 존재하는 미션 id
-start_hint: curl -i localhost:8080/healthz   # 시작 직후 증상을 확인하는 명령 (CLI에만 표시)
+warmups: [some-mission]     # 1~2개, kind=warmup 미션 id
+start_hint: curl -i localhost:8080/healthz   # 장애 주입 직후 증상을 확인하는 명령 (CLI에만 표시)
+measure:                    # 정상·장애·해결 후 측정 (k6 + 자원 샘플링)
+  path: /healthz            # 경로만. 호스트·스킴은 env 로 정해져요
+  service: api              # CPU·메모리를 볼 compose 서비스 또는 kind Deployment
+  # method: GET             # GET | POST
+  # body: '{"name":"k6"}'   # POST 본문
+  # vus: 5                  # 1~50
+  # duration_s: 20          # 5~40
+  # scheme: http            # https 는 compose nginx 443 (실습용 CA)
+interview:                  # 면접 질문 1~2개 (docs/curriculum.md §7)
+  - 이 장애와 연결되는 면접 질문

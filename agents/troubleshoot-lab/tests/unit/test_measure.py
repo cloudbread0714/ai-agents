@@ -9,6 +9,7 @@ from troubleshoot_lab.measure import (
     K6_IMAGE,
     MeasureError,
     Measurer,
+    fault_signals,
     format_table,
     parse_docker_stats,
     parse_kubectl_top,
@@ -155,3 +156,30 @@ def test_format_table_compares_only_measured_values():
     assert "| CPU 최대 | 측정 불가 | — |" in table
     assert "| 처리량 | 측정하지 않음 | — |" in table
     assert "측정 생략(사유X)" in format_table(skipped(), skip_reason="사유X")
+
+
+def _m(**values):
+    return {k: ({"status": v} if isinstance(v, str) else {"value": v}) for k, v in values.items()}
+
+
+BASE = _m(error_rate=0.0, avg_ms=10, p95_ms=20, cpu_max_pct=10, mem_max_mib=100)
+
+
+@pytest.mark.parametrize(
+    ("fault", "expected"),
+    [
+        (_m(error_rate=0.04, avg_ms=12, p95_ms=25, cpu_max_pct=25, mem_max_mib=120), []),
+        (_m(error_rate=0.05), ["error_rate"]),
+        (_m(avg_ms=15, p95_ms=21), ["avg_ms"]),
+        (_m(avg_ms=6, p95_ms=13), ["avg_ms", "p95_ms"]),  # faster also counts (wrong cache)
+        (
+            _m(avg_ms="not_applicable", p95_ms="not_applicable"),
+            ["avg_ms:not_applicable", "p95_ms:not_applicable"],
+        ),
+        (_m(cpu_max_pct=30), ["cpu_max_pct"]),
+        (_m(mem_max_mib=130), ["mem_max_mib"]),
+        (_m(cpu_max_pct="unavailable", mem_max_mib="unavailable"), []),
+    ],
+)
+def test_fault_signals_sc005(fault, expected):
+    assert fault_signals(BASE, fault) == expected

@@ -281,3 +281,24 @@ def format_table(
 
 def strip_display(metrics: Metrics) -> Metrics:
     return {k: v for k, v in metrics.items() if k in METRIC_KEYS}
+
+
+def fault_signals(baseline: Metrics, fault: Metrics) -> list[str]:
+    """Which SC-005 criteria a fault measurement meets against its baseline (empty: none)."""
+    signals = []
+    base_err, err = _number(baseline.get("error_rate")), _number(fault.get("error_rate"))
+    if base_err is not None and err is not None and err - base_err >= 0.05:
+        signals.append("error_rate")
+    for key in ("avg_ms", "p95_ms"):
+        base, now = _number(baseline.get(key)), _number(fault.get(key))
+        if base is not None and (fault.get(key) or {}).get("status") == "not_applicable":
+            signals.append(f"{key}:not_applicable")
+        elif base and now is not None and (now >= base * 1.5 or now <= base / 1.5):
+            signals.append(key)
+    base_cpu, cpu = _number(baseline.get("cpu_max_pct")), _number(fault.get("cpu_max_pct"))
+    if base_cpu is not None and cpu is not None and cpu - base_cpu >= 20:
+        signals.append("cpu_max_pct")
+    base_mem, mem = _number(baseline.get("mem_max_mib")), _number(fault.get("mem_max_mib"))
+    if base_mem and mem is not None and mem >= base_mem * 1.3:
+        signals.append("mem_max_mib")
+    return signals

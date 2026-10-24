@@ -16,12 +16,12 @@ MISSION_IDS = sorted(load_catalog(Path(__file__).resolve().parents[2]).missions)
 def test_mission_steps(sandbox, mission_id):
     mission = sandbox.catalog.missions[mission_id]
     item_dir = sandbox.catalog.paths[mission_id]
-    mode = restore_mode(mission.category)
+    mode = restore_mode(mission.env)
     run = sandbox.runner.run
 
     assert sandbox.runner.restore(mode) == 0
     baseline = sandbox.fingerprint(mode)
-    sandbox.runner.mark_dirty(mission.category)
+    sandbox.runner.mark_dirty(mission.env)
     assert run(mission_id, item_dir, "setup.sh") == 0
 
     for step in mission.steps:
