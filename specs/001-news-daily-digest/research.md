@@ -118,7 +118,8 @@ Phase 0 결과. Technical Context에 NEEDS CLARIFICATION은 남아 있지 않으
 
 ## R9. 실행 시각 지연
 
-- **Decision**: cron은 `0 23 * * *`(UTC 23:00 = KST 08:00)로 설정한다.
+- **Decision**: cron은 `40 22 * * *`(UTC 22:40 = KST 07:40)로 설정한다. (2026-10-24 갱신: 처음에는 `0 23 * * *`였다.
+  정각은 GitHub Actions에서 가장 붐벼 지연이 크므로, 정각이 아닌 분으로 20분 앞당겼다. analyze A1)
 - **Risk**: GitHub Actions schedule은 부하가 있으면 수 분에서 수십 분 늦게 시작될 수 있다.
   SC-001(10분 이내)을 지키지 못할 수 있으므로, 운영 첫 2주 동안 실제 지연을 측정한다.
   지연이 크면 cron을 앞당기는 방안(예: `45 22 * * *`)을 검토한다.

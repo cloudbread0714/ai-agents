@@ -4,7 +4,7 @@
 
 | 에이전트 | 설명 | 상태 |
 |----------|------|------|
-| [news-digest](agents/news-digest/) | 매일 08:00 KST에 기술 뉴스 1건을 골라 Slack에 한국어로 게시 | 구현 완료 |
+| [news-digest](agents/news-digest/) | 매일 08:00 KST 무렵 기술 뉴스 1건을 골라 Slack에 한국어로 게시 | 구현 완료 |
 | troubleshoot-lab | 로컬 샌드박스 장애 주입·복구 실습 | 예정 |
 | job-apply | 이력서 기반 지원서 초안 작성 | 예정 |
 
