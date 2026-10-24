@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "news-digest posted history",
+  "type": "object",
+  "required": ["version", "posts"],
+  "additionalProperties": false,
+  "properties": {
+    "version": { "const": 1 },
+    "posts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["article_id", "url", "title", "title_ko", "category", "source", "posted_at", "posted_date_kst"],
+        "additionalProperties": false,
+        "properties": {
+          "article_id": { "type": "string", "pattern": "^[0-9a-f]{16}$" },
+          "url": { "type": "string", "format": "uri" },
+          "title": { "type": "string" },
+          "title_ko": { "type": "string" },
+          "category": { "enum": ["infra", "ai_agent"] },
+          "source": { "type": "string" },
+          "posted_at": { "type": "string", "format": "date-time" },
+          "posted_date_kst": { "type": "string", "format": "date" }
+        }
+      }
+    }
+  }
+}

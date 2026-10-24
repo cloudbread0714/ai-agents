@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Agent Engineering Blog</title>
+  <id>https://agents.example.com/</id>
+  <updated>2026-10-25T08:00:00Z</updated>
+  <entry>
+    <title>Building reliable tool-calling agents with retries and evals</title>
+    <link href="https://agents.example.com/posts/reliable-agents/"/>
+    <id>https://agents.example.com/posts/reliable-agents/</id>
+    <updated>2026-10-25T08:00:00Z</updated>
+    <summary type="html">&lt;p&gt;How we made our &lt;em&gt;agent framework&lt;/em&gt; recover from tool failures &amp;amp; measure it with evals.&lt;/p&gt;</summary>
+  </entry>
+</feed>

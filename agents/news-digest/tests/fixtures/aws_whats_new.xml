@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+<channel>
+<title>What's New with AWS</title>
+<item>
+  <title>AWS CodePipeline now supports GitHub Actions runners as compute</title>
+  <link>https://aws.amazon.com/about-aws/whats-new/2026/10/aws-codepipeline-github-actions-runners/</link>
+  <pubDate>Sat, 25 Oct 2026 20:00:00 +0000</pubDate>
+  <description>You can now run CodePipeline actions on self-hosted GitHub Actions runners.</description>
+</item>
+<item>
+  <title>Item without a publication date</title>
+  <link>https://aws.amazon.com/about-aws/whats-new/2026/10/no-date/</link>
+  <description>Published date is missing.</description>
+</item>
+</channel>
+</rss>

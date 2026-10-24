@@ -1,0 +1,40 @@
+# news-digest settings. Secrets never go here — they come from environment variables.
+
+interests:
+  infra:
+    - 클라우드 인프라(AWS)
+    - Docker
+    - Kubernetes
+    - CI/CD
+    - 모니터링
+  ai_agent:
+    - LLM 활용
+    - 에이전트 프레임워크
+    - MCP
+    - 자동화
+  career:
+    - DevOps 취업 준비
+
+selection:
+  priority: [relevance, practical_impact, learning_value]
+  freshness_hours: 72
+  max_items_per_source: 15
+  max_candidates: 40
+  balance_window: 2          # 최근 N건이 같은 분류면 반대 분류 우선
+
+llm:
+  model: claude-haiku-5-5
+  effort: medium
+  max_tokens: 8000         # Haiku 5.5 thinks by default; thinking counts toward this
+  max_retries: 3
+  fallbacks: null            # Haiku 5.5 has no server-side fallback ("default" → 400)
+
+budget:
+  max_cost_usd_per_run: 0.05
+
+pricing:                     # USD per 1M tokens — update when changing llm.model
+  claude-opus-5-5:   { input: 4.00, output: 20.00 }
+  claude-sonnet-5-5: { input: 2.00, output: 10.00 }
+  claude-haiku-5-5:  { input: 0.10, output: 0.50 }
+
+timezone: Asia/Seoul
