@@ -12,7 +12,7 @@ tags:
 - cpu
 - algorithm
 - gil
-- load
+- naive-loop
 warmups:
 - process-check
 - k6-basics

@@ -11,7 +11,7 @@ steps:
 - id: listen
   guide: |
     Mac 호스트에는 이 리눅스 명령이 없거나 다르게 동작해요. `lab exec <서비스> -- <명령>` 은 진단 도구 컨테이너를 그 서비스의 네트워크·프로세스 공간에 붙여 실행해요(Claude Code에서는 `/lab-exec <서비스> <명령>`).
-    `ss -ant` 는 모든 TCP 소켓과 상태를 보여 줘요. 서버 소켓은 연결을 기다리는 상태, 맺어진 연결은 ESTAB 이에요.
+    `ss -ant` 는 모든 TCP 소켓과 상태를 보여 줘요. 서버 소켓은 연결을 기다리는 상태, 맺어진 연결은 ESTAB(ESTABLISHED) 이에요.
   command: agents/troubleshoot-lab/bin/lab exec api -- ss -ant
   check: answer
   prompt: uvicorn 의 8000 포트 소켓 상태 이름을 입력하세요

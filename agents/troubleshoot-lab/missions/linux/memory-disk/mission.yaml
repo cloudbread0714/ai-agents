@@ -11,9 +11,9 @@ steps:
 - id: free
   guide: |
     Mac 호스트에는 이 리눅스 명령이 없거나 다르게 동작해요. `lab exec <서비스> -- <명령>` 은 진단 도구 컨테이너를 그 서비스의 네트워크·프로세스 공간에 붙여 실행해요(Claude Code에서는 `/lab-exec <서비스> <명령>`).
-    `free -m` 은 메모리를 MiB 단위로 보여 줘요. 리눅스는 남는 메모리를 캐시(buff/cache)로 쓰기 때문에 `free` 열이 작아도 정상일 수 있어요.
+    `free -h` 는 메모리를 읽기 쉬운 단위(Mi, Gi)로 보여 줘요. 리눅스는 남는 메모리를 캐시(buff/cache)로 쓰기 때문에 `free` 열이 작아도 정상일 수 있어요.
     새 프로그램이 실제로 쓸 수 있는 양은 다른 열이에요. 컨테이너 안에서는 호스트(Docker VM) 전체 메모리가 보인다는 점도 기억하세요.
-  command: agents/troubleshoot-lab/bin/lab exec api -- free -m
+  command: agents/troubleshoot-lab/bin/lab exec api -- free -h
   check: answer
   prompt: 새 프로그램이 실제로 쓸 수 있는 메모리를 나타내는 열 이름을 입력하세요
 - id: vmstat

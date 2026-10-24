@@ -2,11 +2,12 @@ id: socket-check
 env: compose
 kind: warmup
 title: 포트가 열려 있는지 확인하기
-minutes: 15
+minutes: 20
 goals:
 - ss -lntp 로 프로세스가 듣고 있는 주소와 포트를 본다
 - nc -vz 로 다른 서비스의 포트에 연결해 본다
 - 연결 성공과 거부를 구분한다
+- ss -s, ip addr, ip route 로 소켓 요약과 주소·경로를 본다
 steps:
 - id: listen
   guide: |
@@ -26,3 +27,17 @@ steps:
   command: agents/troubleshoot-lab/bin/lab exec api -- nc -vz -w 2 redis 6380
   check: answer
   prompt: succeeded 와 refused 중 어느 단어가 나왔나요?
+- id: summary
+  guide: |
+    `ss -s` 는 소켓 수를 상태별로 요약해요. `TCP:` 줄 괄호 안에 연결 상태별 개수가 나와요.
+    연결이 갑자기 늘거나 특정 상태가 쌓이는지 빠르게 볼 때 써요.
+  command: agents/troubleshoot-lab/bin/lab exec api -- ss -s
+  check: answer
+  prompt: 'TCP: 줄 괄호 안의 첫 단어(상태 이름)를 입력하세요'
+- id: route
+  guide: |
+    `ip addr` 은 이 공간의 네트워크 인터페이스와 IP를, `ip route` 는 패킷을 어디로 보낼지(경로)를 보여 줘요.
+    `default via <주소>` 는 목적지를 모를 때 보내는 게이트웨이예요. 다른 네트워크로 나가는 길이 막히면 여기부터 봐요.
+  command: agents/troubleshoot-lab/bin/lab exec api -- 'ip addr show eth0; ip route'
+  check: answer
+  prompt: default via 뒤의 게이트웨이 주소를 입력하세요

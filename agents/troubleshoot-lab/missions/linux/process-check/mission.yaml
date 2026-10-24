@@ -5,7 +5,7 @@ title: CPU를 쓰는 프로세스 찾기
 minutes: 15
 goals:
 - top -b 로 Load Average 와 CPU 사용률을 읽는다
-- ps --sort 로 CPU를 가장 많이 쓰는 프로세스를 찾는다
+- ps aux --sort 로 CPU를 가장 많이 쓰는 프로세스를 찾는다
 - PID 로 프로세스를 종료한다
 steps:
 - id: load
@@ -18,10 +18,10 @@ steps:
   check: answer
   prompt: load average 는 숫자 몇 개로 되어 있나요?
 - id: top-cpu
-  guide: api 컨테이너 안에서 무언가가 CPU를 계속 쓰고 있어요. `ps` 를 CPU 사용률 순으로 정렬해 찾아보세요.
-  command: agents/troubleshoot-lab/bin/lab exec api -- 'ps -eo pid,comm,%cpu,%mem --sort=-%cpu | head -5'
+  guide: api 컨테이너 안에서 무언가가 CPU를 계속 쓰고 있어요. `ps aux --sort=-%cpu` 는 모든 프로세스를 CPU 사용률이 높은 순(-)으로 보여 줘요. 맨 위 줄을 보세요.
+  command: agents/troubleshoot-lab/bin/lab exec api -- 'ps aux --sort=-%cpu | head -5'
   check: answer
-  prompt: CPU를 가장 많이 쓰는 프로세스의 COMMAND 를 입력하세요
+  prompt: CPU를 가장 많이 쓰는 프로세스의 COMMAND 를 입력하세요(경로째 붙여도 돼요)
 - id: kill
   guide: |
     찾은 프로세스의 PID 로 종료 신호(기본 SIGTERM)를 보내세요. 아래 명령의 `<PID>` 를 위에서 본 숫자로 바꾸면 돼요.
