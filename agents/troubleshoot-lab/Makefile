@@ -25,7 +25,9 @@ up: doctor
 	docker build -q -t lab-toolbox:dev environment/toolbox
 	docker pull -q grafana/k6:1.0.0
 	@mkdir -p $(LAB_STATE)/certs
-	docker run --rm -v $(LAB_STATE)/certs:/certs -v $(LAB_ROOT)/environment/certs:/scripts:ro \
+	# Run as the host user so the generated keys stay readable by work_reset on Linux.
+	docker run --rm --user $$(id -u):$$(id -g) -e HOME=/tmp \
+	  -v $(LAB_STATE)/certs:/certs -v $(LAB_ROOT)/environment/certs:/scripts:ro \
 	  lab-toolbox:dev sh /scripts/generate.sh
 	@mkdir -p $(dir $(LAB_KUBECONFIG))
 	@kind get clusters 2>/dev/null | grep -qx troubleshoot-lab || \
