@@ -234,7 +234,7 @@ description: "Task list for lab: 트러블슈팅 실습 (커리큘럼 기반 장
   - subcommands `measure [--skip REASON]`, `inject`, `exec [--env compose|kind] <service> -- <cmd...>`, `shell <service>`, `report [--done] [id]`
   - `LAB_RESULT` adds `attempt` and `stage`
   - update `agents/troubleshoot-lab/src/troubleshoot_lab/sync.py` paths (progress.json + docs/reports/)
-- [ ] T031 [P] [US1] Slash commands — 보류: `.claude/` 수정이 자동 권한 분류기에 막혀 사용자 승인 필요
+- [X] T031 [P] [US1] Slash commands
   - add `.claude/commands/lab-measure.md`, `lab-inject.md`, `lab-exec.md`, `lab-report.md`
   - update the common rules in all `.claude/commands/lab-*.md`: rule 0 "6단계 중 사용자가 할 단계를 대신하지 않는다", `/lab-exec` runs exactly the user's command
   - update `.claude/settings.json` allow list (+ `measure`, `inject`, `report`, `shell`; no `exec`, no `sync`)
