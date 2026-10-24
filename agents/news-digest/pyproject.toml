@@ -1,0 +1,26 @@
+[project]
+name = "news-digest"
+version = "0.1.0"
+description = "Daily pick of the most important tech article, posted to Slack in Korean"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "shared",
+    "feedparser>=6.0",
+]
+
+[project.scripts]
+news-digest = "news_digest.cli:main"
+
+[tool.uv.sources]
+shared = { workspace = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/news_digest"]
+
+[tool.pytest.ini_options]
+addopts = "--import-mode=importlib"
+pythonpath = ["src", "../../shared/src", "tests"]

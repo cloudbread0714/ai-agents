@@ -1,0 +1,36 @@
+[project]
+name = "ai-agents"
+version = "0.1.0"
+description = "Monorepo for AI agents"
+requires-python = ">=3.12,<3.13"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "pytest-httpx>=0.30",
+    "ruff>=0.6",
+]
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = ["shared", "agents/*"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["shared", "news_digest", "nd_support"]
+
+[tool.pytest.ini_options]
+testpaths = ["shared/tests", "agents/news-digest/tests"]
+addopts = "--import-mode=importlib"
+# src paths too: workspace packages import even if the editable .pth is skipped
+# (e.g. a .venv inside an iCloud-synced folder gets its files flagged hidden).
+pythonpath = ["shared/src", "agents/news-digest/src", "agents/news-digest/tests"]

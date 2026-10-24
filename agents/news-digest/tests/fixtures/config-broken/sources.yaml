@@ -1,0 +1,8 @@
+# Every source points at an unresolvable host — used to exercise COLLECT_FAILED (quickstart §4).
+sources:
+  - name: Broken A
+    url: https://feed.invalid/a.xml
+    category: infra
+  - name: Broken B
+    url: https://feed.invalid/b.xml
+    category: ai_agent

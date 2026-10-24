@@ -1,0 +1,76 @@
+name: news-digest
+
+on:
+  schedule:
+    - cron: "0 23 * * *" # 08:00 KST
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Slack channel to post to"
+        type: choice
+        options: [test, main]
+        default: test
+
+permissions:
+  contents: write # commit agents/news-digest/data/posted.json
+
+concurrency:
+  group: news-digest
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install
+        id: install
+        run: uv sync --package news-digest --frozen
+
+      - name: Run news-digest
+        id: digest
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SLACK_WEBHOOK_URL_MAIN: ${{ secrets.SLACK_WEBHOOK_URL_MAIN }}
+          SLACK_WEBHOOK_URL_TEST: ${{ secrets.SLACK_WEBHOOK_URL_TEST }}
+        run: uv run --package news-digest news-digest --target "${{ inputs.target || 'main' }}"
+
+      - name: Commit posted history
+        id: commit
+        if: always()
+        run: |
+          file=agents/news-digest/data/posted.json
+          if git diff --quiet -- "$file"; then
+            echo "history unchanged"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$file"
+          git commit -m "chore(news): update posted history [skip ci]"
+          for attempt in 1 2 3; do
+            git pull --rebase origin "${GITHUB_REF_NAME}" && git push origin "HEAD:${GITHUB_REF_NAME}" && exit 0
+            echo "push attempt ${attempt} failed; retrying"
+            sleep $((attempt * 5))
+          done
+          exit 1
+
+      # news-digest alerts on its own failures; this covers what it cannot see:
+      # setup failures and a history push failure (which risks a duplicate post tomorrow).
+      - name: Alert test channel
+        if: failure() && (steps.install.outcome == 'failure' || steps.commit.outcome == 'failure')
+        env:
+          SLACK_WEBHOOK_URL_TEST: ${{ secrets.SLACK_WEBHOOK_URL_TEST }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          KIND: "${{ steps.commit.outcome == 'failure' && 'WARNING: history not pushed' || 'workflow setup failed' }}"
+        run: |
+          payload=$(jq -n --arg t "⚠️ news-digest ${KIND}" --arg u "$RUN_URL" \
+            '{text: ($t + " — <" + $u + "|GitHub Actions 실행 로그>")}')
+          curl --fail --silent --show-error --retry 3 --retry-all-errors --retry-delay 2 \
+            -H 'Content-Type: application/json' -d "$payload" "$SLACK_WEBHOOK_URL_TEST"
