@@ -6,7 +6,7 @@
 
 ## Summary
 
-매일 KST 08:00에 GitHub Actions cron이 `news-digest` CLI를 실행한다. 실행 순서는 다음과 같다.
+매일 KST 07:40(8시 무렵 게시 목표)에 GitHub Actions cron이 `news-digest` CLI를 실행한다. 실행 순서는 다음과 같다.
 
 1. YAML에 등록된 RSS 소스를 feedparser로 수집한다.
 2. 코드에서 중복 제거, 신선도(72h) 필터, 후보 수 제한을 적용한다.
@@ -32,7 +32,7 @@
 
 **Testing**: pytest, `pytest-httpx`(HTTP 모킹), 고정 RSS 픽스처 파일. Anthropic 클라이언트는 테스트 더블로 주입한다.
 
-**Target Platform**: GitHub Actions `ubuntu-latest`. cron은 `0 23 * * *`(UTC)이고 `workflow_dispatch`로 수동 실행도 지원한다.
+**Target Platform**: GitHub Actions `ubuntu-latest`. cron은 `40 22 * * *`(UTC, KST 07:40)이고 `workflow_dispatch`로 수동 실행도 지원한다.
 
 **Project Type**: CLI(배치 잡). uv workspace 모노레포의 멤버 패키지 2개(`agents/news-digest`, `shared`)로 구성한다.
 

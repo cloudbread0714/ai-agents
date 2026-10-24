@@ -1,6 +1,6 @@
 # news-digest
 
-매일 08:00 KST에 RSS를 모아 **가장 중요한 글 1개**를 골라 Slack에 한국어로 게시하는 에이전트입니다.
+매일 08:00 KST 무렵 RSS를 모아 **가장 중요한 글 1개**를 골라 Slack에 한국어로 게시하는 에이전트입니다.
 스펙: [`specs/001-news-daily-digest/`](../../specs/001-news-daily-digest/spec.md)
 
 ```
@@ -46,7 +46,8 @@ uv run --package news-digest news-digest                      # 정상 채널에
 
 ## GitHub Actions
 
-`.github/workflows/news-digest.yml`이 매일 UTC 23:00(KST 08:00)에 실행되고, 게시 이력이 바뀌면 커밋합니다.
+`.github/workflows/news-digest.yml`이 매일 UTC 22:40(KST 07:40)에 실행되고, 게시 이력이 바뀌면 커밋합니다.
+정각 cron은 GitHub Actions에서 수십 분씩 늦어지는 일이 잦아서, 20분 앞당겨 8시 무렵 게시되게 했습니다.
 레포 Secrets에 위 환경변수 3개를 등록해야 합니다. 수동 실행은 Actions → news-digest → Run workflow
 (`target`: test | main)에서 합니다. schedule은 기본 브랜치(main)에서만 동작합니다.
 

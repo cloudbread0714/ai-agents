@@ -65,4 +65,4 @@ uv run --package news-digest news-digest --target test --force --config-dir agen
    - 정상 채널에 게시된다.
    - `github-actions[bot]`이 `agents/news-digest/data/posted.json` 커밋을 만든다.
 4. 같은 날 다시 `target=main`으로 실행하면 `ALREADY_POSTED`로 끝나고 게시되지 않는다.
-5. 다음 날 08:00 KST 전후로 schedule 실행이 일어나는지 확인하고, 실제 시작 지연을 기록한다(research R9).
+5. 다음 날 07:40~08:30 KST 사이에 schedule 실행이 일어나는지 확인하고, 실제 시작 지연을 기록한다(research R9).

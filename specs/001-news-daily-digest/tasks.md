@@ -113,7 +113,7 @@ description: "Task list for news: 데일리 기술 뉴스 픽"
 - [X] T029 [US1] `agents/news-digest/src/news_digest/pipeline.py`: `run(settings, sources, env, target, dry_run, now, client, http) -> RunResult`의 정상 경로(수집 → 정규화 → 추정 → 선정 → 포맷 → 게시)와 비용 기록
 - [X] T030 [US1] `agents/news-digest/src/news_digest/cli.py`: contracts/cli.md의 `--target main|test`, `--dry-run`, `--config-dir`, 필수 env 검증(누락 시 exit 2 + 변수 이름만 출력), stdout 마지막 줄에 RunResult 요약 JSON, 종료 코드 매핑
 - [X] T031 [US1] `.github/workflows/news-digest.yml`(초안)
-  - 트리거: `schedule: cron "0 23 * * *"`, `workflow_dispatch`(input `target`: main|test, 기본 test)
+  - 트리거: `schedule: cron "40 22 * * *"`(2026-10-24 A1 결정으로 `0 23`에서 변경), `workflow_dispatch`(input `target`: main|test, 기본 test)
   - 실행: `astral-sh/setup-uv`, `uv sync --package news-digest --frozen`, `uv run --package news-digest news-digest --target ${{ inputs.target || 'main' }}`
   - Secrets 3개를 env로 주입
 - [X] T032 [US1] 실제 피드 URL 9개의 응답과 파싱을 1회 확인하고, 실패하는 소스는 `sources.yaml`에서 URL을 고치거나 `enabled: false`로 바꾼 뒤 결과를 research.md R4에 반영
