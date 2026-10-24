@@ -49,7 +49,14 @@ FR005_TOPICS = {
         r"\blsof\b",
     ],
     "webserver": [r"ss -ant", r"established", r"time.wait", r"close.wait", r"\b502\b", r"\b504\b"],
-    "db-cache": [r"pg_stat_activity", r"\bexplain\b", r"redis-cli", r"\binfo\b", r"\bttl\b", r"keyspace"],
+    "db-cache": [
+        r"pg_stat_activity",
+        r"\bexplain\b",
+        r"redis-cli",
+        r"\binfo\b",
+        r"\bttl\b",
+        r"keyspace",
+    ],
     "lb-cloud": [r"endpoint", r"readiness"],
     "monitoring": [r"\bk6\b", r"p\(?95", r"\blogs\b", r"rollout"],
 }

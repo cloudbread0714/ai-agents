@@ -11,12 +11,36 @@ def test_six_steps_produce_events_and_a_report(learner, measurer, store, repo_ro
         learner.check("tok")
 
     measurer.by_phase = {
-        "baseline": metrics(avg_ms=12.0, p95_ms=30.0, rps=200.0, error_rate=0.0, requests=4000,
-                            cpu_avg_pct=8.0, cpu_max_pct=15.0, mem_max_mib=60.0),
-        "fault": metrics(avg_ms="not_applicable", p95_ms="not_applicable", rps=50.0, error_rate=1.0,
-                         requests=1000, cpu_avg_pct=1.0, cpu_max_pct=2.0, mem_max_mib=58.0),
-        "after": metrics(avg_ms=13.0, p95_ms=31.0, rps=195.0, error_rate=0.0, requests=3900,
-                         cpu_avg_pct=8.5, cpu_max_pct=16.0, mem_max_mib=61.0),
+        "baseline": metrics(
+            avg_ms=12.0,
+            p95_ms=30.0,
+            rps=200.0,
+            error_rate=0.0,
+            requests=4000,
+            cpu_avg_pct=8.0,
+            cpu_max_pct=15.0,
+            mem_max_mib=60.0,
+        ),
+        "fault": metrics(
+            avg_ms="not_applicable",
+            p95_ms="not_applicable",
+            rps=50.0,
+            error_rate=1.0,
+            requests=1000,
+            cpu_avg_pct=1.0,
+            cpu_max_pct=2.0,
+            mem_max_mib=58.0,
+        ),
+        "after": metrics(
+            avg_ms=13.0,
+            p95_ms=31.0,
+            rps=195.0,
+            error_rate=0.0,
+            requests=3900,
+            cpu_avg_pct=8.5,
+            cpu_max_pct=16.0,
+            mem_max_mib=61.0,
+        ),
     }
     assert learner.start("d-easy").outcome == "ok"  # opens attempt 1
     assert learner.measure().extra["phase"] == "baseline"  # 1

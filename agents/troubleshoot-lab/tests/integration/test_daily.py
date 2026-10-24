@@ -36,13 +36,21 @@ def test_first_post_is_day_one_and_recorded(lab_root, httpx_mock):
     code, summary, _ = daily(lab_root, "--target", "lab")
     assert code == 0 and summary["status"] == "POSTED"
     assert summary["daily"] | {} == {
-        "status": "POSTED", "kind": "day", "day": 1, "main_id": "c-one", "second_id": None,
-        "backlog": [], "error": None,
+        "status": "POSTED",
+        "kind": "day",
+        "day": 1,
+        "main_id": "c-one",
+        "second_id": None,
+        "backlog": [],
+        "error": None,
     }
     assert bodies(httpx_mock, LAB_HOOK)[0]["text"] == "📚 1일 차 · 1주 차: 주제 1"
     record = posted(lab_root)["daily"][0]
     assert (record["date_kst"], record["kind"], record["day"], record["main_kind"]) == (
-        "2026-10-26", "day", 1, "mission",
+        "2026-10-26",
+        "day",
+        1,
+        "mission",
     )
 
 
@@ -144,4 +152,6 @@ def test_post_modes_and_weekly_dedup(lab_root, httpx_mock):
     httpx_mock.add_response(url=LAB_HOOK, text="ok", is_reusable=True)
     daily(lab_root, "--target", "lab", "--post", "weekly", now=MONDAY)
     _, summary, _ = daily(lab_root, "--target", "lab", now=SATURDAY_UTC_SUNDAY_KST)
-    assert summary["daily"]["status"] == "POSTED" and summary["weekly"]["status"] == "ALREADY_POSTED"
+    assert (
+        summary["daily"]["status"] == "POSTED" and summary["weekly"]["status"] == "ALREADY_POSTED"
+    )

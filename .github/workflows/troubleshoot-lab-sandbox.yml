@@ -1,14 +1,17 @@
 name: troubleshoot-lab-sandbox
 
-# Real docker compose + kind: every scenario's inject/verify/reset and every mission's
-# steps (research R13). Only when practice content or the environment changes.
+# Real docker compose + kind: every scenario's measure/inject/verify/reset cycle and every
+# mission's steps (research R13, SC-005). Only when practice content or the environment changes.
 on:
   pull_request:
     paths:
+      # environment/** covers toolbox/ and k6/ too
       - "agents/troubleshoot-lab/environment/**"
       - "agents/troubleshoot-lab/lib/**"
       - "agents/troubleshoot-lab/missions/**"
       - "agents/troubleshoot-lab/scenarios/**"
+      - "agents/troubleshoot-lab/curriculum/**"
+      - "agents/troubleshoot-lab/tests/sandbox/**"
       - ".github/workflows/troubleshoot-lab-sandbox.yml"
   workflow_dispatch:
 
@@ -22,7 +25,7 @@ concurrency:
 jobs:
   sandbox:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
 

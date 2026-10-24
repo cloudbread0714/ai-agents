@@ -28,8 +28,14 @@ def _text(payload):
 
 
 def _day_pick(cat, day, main, **kw):
-    return DayPick(kind="day", day=day, plan_day=cat.plan.get(day), main_id=main,
-                   main_kind="scenario" if main in cat.scenarios else "mission", **kw)
+    return DayPick(
+        kind="day",
+        day=day,
+        plan_day=cat.plan.get(day),
+        main_id=main,
+        main_kind="scenario" if main in cat.scenarios else "mission",
+        **kw,
+    )
 
 
 def test_scenario_day_message(lab_root):
@@ -65,7 +71,9 @@ def test_time_lines(lab_root):
 
 def test_review_catchup_extra_and_composite_headers(lab_root):
     cat = load_catalog(lab_root)
-    review = _text(build_daily(_day_pick(cat, 4, "d-easy", minutes=60, review_flag=True), cat, Progress(), DAY))
+    review = _text(
+        build_daily(_day_pick(cat, 4, "d-easy", minutes=60, review_flag=True), cat, Progress(), DAY)
+    )
     assert "· 복습" in review and "이번에는 이 관점으로: 실습 4" in review
     for kind, extra, header in [
         ("catchup", {}, "🔁 따라잡기 날"),
@@ -74,15 +82,23 @@ def test_review_catchup_extra_and_composite_headers(lab_root):
     ]:
         pick = DayPick(kind=kind, main_id="d-mid", main_kind="scenario", minutes=60, **extra)
         assert build_daily(pick, cat, Progress(), DAY)["text"] == header
-    comp = DayPick(kind="day", day=7, plan_day=cat.plan.get(7), main_id="d-mid", main_kind="scenario",
-                   minutes=60, composite=True)
+    comp = DayPick(
+        kind="day",
+        day=7,
+        plan_day=cat.plan.get(7),
+        main_id="d-mid",
+        main_kind="scenario",
+        minutes=60,
+        composite=True,
+    )
     assert build_daily(comp, cat, Progress(), DAY)["text"].endswith("(종합: 후보 중 1개)")
 
 
 def test_warmups_done_and_in_progress_warning(lab_root):
     cat = load_catalog(lab_root)
     prog = progress_of(
-        ev("mission_completed", "m-one", 0), ev("mission_completed", "m-two", 1),
+        ev("mission_completed", "m-one", 0),
+        ev("mission_completed", "m-two", 1),
         ev("scenario_started", "w-easy", 2, attempt=1),
     )
     pick = _day_pick(cat, 2, "d-easy", minutes=30)
@@ -96,11 +112,15 @@ def test_no_hidden_text_anywhere_in_payload(lab_root):
     cat = load_catalog(lab_root)
     for sid in cat.scenarios:
         raw = json.dumps(
-            build_daily(_day_pick(cat, 2, sid, minutes=60), cat, Progress(), DAY), ensure_ascii=False
+            build_daily(_day_pick(cat, 2, sid, minutes=60), cat, Progress(), DAY),
+            ensure_ascii=False,
         )
         for leaked in (
             *[hint_sentinel(sid, n) for n in (1, 2, 3)],
-            solution_sentinel(sid), tag_sentinel(sid), start_hint_sentinel(sid), interview_sentinel(sid),
+            solution_sentinel(sid),
+            tag_sentinel(sid),
+            start_hint_sentinel(sid),
+            interview_sentinel(sid),
             "/api/items",  # measure spec
         ):
             assert leaked not in raw

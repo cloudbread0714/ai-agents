@@ -49,8 +49,13 @@ def test_scenario_result_line_has_attempt_and_stage(lab_root, learner):
         run_cli(argv, lab_root, learner)
     _, lines = run_cli(["start", "w-easy"], lab_root, learner)
     assert _result(lines) | {} == {
-        "command": "start", "kind": "scenario", "id": "w-easy", "outcome": "ok",
-        "sync_suggested": False, "attempt": 1, "stage": "started",
+        "command": "start",
+        "kind": "scenario",
+        "id": "w-easy",
+        "outcome": "ok",
+        "sync_suggested": False,
+        "attempt": 1,
+        "stage": "started",
     }
     code, lines = run_cli(["measure", "--skip", "도구 없음"], lab_root, learner)
     assert code == 0 and _result(lines)["outcome"] == "skipped"
@@ -71,7 +76,9 @@ def test_exec_passes_service_command_and_env(lab_root, learner):
     code, lines = run_cli(["exec", "api", "--", "ss", "-lntp"], lab_root, learner)
     assert code == 0 and lines[0] == "LISTEN"
     assert calls == [("api", "ss -lntp", "compose")]
-    run_cli(["exec", "--env", "kind", "nginx", "--", "ss", "-ant", "|", "wc", "-l"], lab_root, learner)
+    run_cli(
+        ["exec", "--env", "kind", "nginx", "--", "ss", "-ant", "|", "wc", "-l"], lab_root, learner
+    )
     assert calls[-1] == ("nginx", "ss -ant | wc -l", "kind")
     _, lines = run_cli(["shell", "redis"], lab_root, learner)
     assert "docker run -it redis" in "\n".join(lines)
@@ -122,7 +129,9 @@ def test_env_prints_exports(lab_root, learner):
 
 def test_sync_passes_through(lab_root, learner):
     code, lines = run_cli(
-        ["sync"], lab_root, learner,
+        ["sync"],
+        lab_root,
+        learner,
         sync_fn=lambda root: SyncResult(4, "브랜치가 main이 아니에요", "wrong_branch"),
     )
     assert code == 4 and _result(lines)["outcome"] == "wrong_branch"

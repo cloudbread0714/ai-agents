@@ -134,9 +134,13 @@ def test_measurer_kind_network(tmp_path):
     assert result["cpu_avg_pct"] == {"status": "unavailable"}  # no metrics-server sample
 
 
-@pytest.mark.parametrize("code,summary", [("timeout", "summary_ok.json"), (1, "summary_ok.json"), (0, None)])
+@pytest.mark.parametrize(
+    "code,summary", [("timeout", "summary_ok.json"), (1, "summary_ok.json"), (0, None)]
+)
 def test_measurer_failures_raise_and_record_nothing(tmp_path, code, summary):
-    m = Measurer(tmp_path, guard=lambda e: None, cmd=FakeCmd(tmp_path, summary, code), sample_every=0.01)
+    m = Measurer(
+        tmp_path, guard=lambda e: None, cmd=FakeCmd(tmp_path, summary, code), sample_every=0.01
+    )
     with pytest.raises(MeasureError):
         m.run(_scenario(), 1, "baseline")
 

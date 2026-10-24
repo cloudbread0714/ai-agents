@@ -53,13 +53,30 @@ def test_counts_reports_answers_pending_and_weak_field(tmp_path):
         _e("hint_opened", "n1", _at(26, 2), attempt=2, level=1),
         _e("hint_opened", "n1", _at(26, 3), attempt=2, level=2),
         _e("scenario_solved", "n1", _at(26, 4), attempt=2, hints_used=2),
-        _e("report_completed", "n1", _at(26, 5), attempt=2, report=report.replace("-1.md", "-2.md"), answered=1),
+        _e(
+            "report_completed",
+            "n1",
+            _at(26, 5),
+            attempt=2,
+            report=report.replace("-1.md", "-2.md"),
+            answered=1,
+        ),
         _e("scenario_started", "l1", _at(27, 1), attempt=1),
         _e("hint_opened", "l1", _at(27, 2), attempt=1, level=1),
         _e("scenario_gave_up", "l1", _at(27, 3), attempt=1, hints_used=1),
     )
-    posted = Posted(daily=[DailyPost(date_kst=date(2026, 10, 27), kind="day", day=3, main_kind="scenario",
-                                     main_id="w1", posted_at=NOW)])
+    posted = Posted(
+        daily=[
+            DailyPost(
+                date_kst=date(2026, 10, 27),
+                kind="day",
+                day=3,
+                main_kind="scenario",
+                main_id="w1",
+                posted_at=NOW,
+            )
+        ]
+    )
     s = summarize(cat, progress, posted, SUNDAY_RUN, repo)
     assert (s.solved, s.gave_up, s.hints, s.reviewed, s.answered) == (1, 1, 3, 1, 1)
     assert s.progress_label == "3/21일 차"

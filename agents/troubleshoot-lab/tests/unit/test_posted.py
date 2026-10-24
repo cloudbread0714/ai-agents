@@ -9,8 +9,15 @@ from troubleshoot_lab.models import DailyPost, Posted, WeeklyPost
 
 
 def _daily(day, main="s", kind="day", n=1, second=None, at=NOW, main_kind="scenario"):
-    return DailyPost(date_kst=day, kind=kind, day=n if kind == "day" else None, main_kind=main_kind,
-                     main_id=main, second_id=second, posted_at=at)
+    return DailyPost(
+        date_kst=day,
+        kind=kind,
+        day=n if kind == "day" else None,
+        main_kind=main_kind,
+        main_id=main,
+        second_id=second,
+        posted_at=at,
+    )
 
 
 def test_v1_empty_upgrades_and_v1_with_records_errors(tmp_path):
@@ -26,10 +33,22 @@ def test_rules():
     with pytest.raises(ValidationError):
         Posted(daily=[_daily(date(2026, 10, 26)), _daily(date(2026, 10, 26), "t")])
     with pytest.raises(ValidationError):
-        DailyPost(date_kst=date(2026, 10, 26), kind="day", main_kind="scenario", main_id="s", posted_at=NOW)
+        DailyPost(
+            date_kst=date(2026, 10, 26),
+            kind="day",
+            main_kind="scenario",
+            main_id="s",
+            posted_at=NOW,
+        )
     with pytest.raises(ValidationError):
-        DailyPost(date_kst=date(2026, 10, 26), kind="catchup", day=3, main_kind="scenario", main_id="s",
-                  posted_at=NOW)
+        DailyPost(
+            date_kst=date(2026, 10, 26),
+            kind="catchup",
+            day=3,
+            main_kind="scenario",
+            main_id="s",
+            posted_at=NOW,
+        )
     with pytest.raises(ValidationError):
         Posted(weekly=[WeeklyPost(week_start_kst=date(2026, 10, 26), posted_at=NOW)] * 2)
 

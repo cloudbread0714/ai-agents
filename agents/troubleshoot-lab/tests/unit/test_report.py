@@ -17,18 +17,41 @@ def _repo(tmp_path):
 
 
 def _scenario(n_questions=2):
-    spec = scenario_spec("site-down", no="3", interview=[f"질문 {i}?" for i in range(1, n_questions + 1)])
+    spec = scenario_spec(
+        "site-down", no="3", interview=[f"질문 {i}?" for i in range(1, n_questions + 1)]
+    )
     return Scenario.model_validate(spec)
 
 
 def _attempt(*extra, end="scenario_solved"):
     events = [
         ev("scenario_started", "site-down", 0, attempt=1),
-        measured("site-down", 1, 1, "baseline", avg_ms=10.0, p95_ms=20.0, rps=100.0, error_rate=0.0,
-                 requests=500, cpu_avg_pct=5.0, cpu_max_pct=9.5, mem_max_mib=60.0),
+        measured(
+            "site-down",
+            1,
+            1,
+            "baseline",
+            avg_ms=10.0,
+            p95_ms=20.0,
+            rps=100.0,
+            error_rate=0.0,
+            requests=500,
+            cpu_avg_pct=5.0,
+            cpu_max_pct=9.5,
+            mem_max_mib=60.0,
+        ),
         ev("fault_injected", "site-down", 2, attempt=1),
-        measured("site-down", 3, 1, "fault", avg_ms="not_applicable", p95_ms="not_applicable",
-                 rps=50.0, error_rate=1.0, requests=250),
+        measured(
+            "site-down",
+            3,
+            1,
+            "fault",
+            avg_ms="not_applicable",
+            p95_ms="not_applicable",
+            rps=50.0,
+            error_rate=1.0,
+            requests=250,
+        ),
         ev("hint_opened", "site-down", 4, attempt=1, level=1),
         ev(end, "site-down", 5, attempt=1, hints_used=1),
         *extra,
@@ -56,7 +79,11 @@ def test_skipped_measurement_shows_reason(tmp_path):
     repo = _repo(tmp_path)
     attempt = _attempt()
     attempt.measurements["after"] = ev(
-        "measured", "site-down", 6, attempt=1, phase="after",
+        "measured",
+        "site-down",
+        6,
+        attempt=1,
+        phase="after",
         metrics={k: {"status": "skipped"} for k in attempt.measurements["baseline"].metrics},
         skip_reason="이미지 다운로드 실패",
     )

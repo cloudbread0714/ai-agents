@@ -59,8 +59,13 @@ def test_start_restores_opens_attempt_and_does_not_inject(learner, runner, store
     assert out.outcome == "ok" and out.extra == {"attempt": 1, "stage": "started"}
     assert runner.scripts() == ["environment:restore.sh"]  # no inject.sh yet
     assert "1단계" in out.text and "/lab-measure" in out.text and "증상 w-easy" in out.text
-    for leaked in (hint_sentinel("w-easy", 1), solution_sentinel("w-easy"), tag_sentinel("w-easy"),
-                   start_hint_sentinel("w-easy"), interview_sentinel("w-easy")):
+    for leaked in (
+        hint_sentinel("w-easy", 1),
+        solution_sentinel("w-easy"),
+        tag_sentinel("w-easy"),
+        start_hint_sentinel("w-easy"),
+        interview_sentinel("w-easy"),
+    ):
         assert leaked not in out.text
     assert _types(store)[-1] == ("scenario_started", "w-easy", None)
 
@@ -198,12 +203,18 @@ def test_report_done_checks_sections_then_records(learner, repo_root, store):
     text = path.read_text()
     for section in ("증상", "원인", "분석 과정", "해결 방법", "재발 방지"):
         text = text.replace(f"## {section}\n", f"## {section}\n썼어요\n", 1)
-    text = text.replace(f"### Q1. {interview_sentinel('w-easy')}\n", f"### Q1. {interview_sentinel('w-easy')}\n답\n")
+    text = text.replace(
+        f"### Q1. {interview_sentinel('w-easy')}\n", f"### Q1. {interview_sentinel('w-easy')}\n답\n"
+    )
     path.write_text(text)
     done = learner.report(done=True)
     assert done.outcome == "reviewed" and done.sync_suggested
     event = store.load().events[-1]
-    assert (event.type, event.answered, event.report) == ("report_completed", 1, created.extra["report"])
+    assert (event.type, event.answered, event.report) == (
+        "report_completed",
+        1,
+        created.extra["report"],
+    )
     assert learner.report(done=True).outcome == "reviewed"  # idempotent, no second event
     assert sum(e.type == "report_completed" for e in store.load().events) == 1
 
