@@ -1,0 +1,40 @@
+id: concept-redis-basics
+env: compose
+kind: concept
+title: Redis 캐시 기초
+minutes: 60
+goals:
+- cache-aside 흐름(먼저 캐시, 없으면 DB 후 저장)을 관찰한다
+- TTL 이 캐시 수명을 정한다는 것을 안다
+- 적중(HIT)과 실패(MISS)의 응답 시간 차이를 잰다
+steps:
+- id: miss
+  guide: |
+    Mac 호스트에는 이 리눅스 명령이 없거나 다르게 동작해요. `lab exec <서비스> -- <명령>` 은 진단 도구 컨테이너를 그 서비스의 네트워크·프로세스 공간에 붙여 실행해요(Claude Code에서는 `/lab-exec <서비스> <명령>`).
+    **읽기**: `docs/curriculum.md` 의 '④ 데이터베이스와 캐시' 절과 '실습 A. 캐시 적용 전후 비교'를 먼저 읽어요(20분).
+
+    `/api/catalog/<id>` 는 cache-aside 방식이에요. Redis 에 있으면 바로 돌려주고(HIT), 없으면 DB 에서 읽은 뒤 Redis 에 저장해요(MISS).
+    응답 헤더 `X-Cache` 가 어느 쪽이었는지 알려 줘요. 미션용으로 7번 항목의 캐시를 비워 뒀어요.
+  command: curl -si localhost:8080/api/catalog/7 | grep -i x-cache
+  check: answer
+  prompt: X-Cache 값을 입력하세요
+- id: hit
+  guide: 바로 한 번 더 요청해 보세요.
+  command: curl -si localhost:8080/api/catalog/7 | grep -i x-cache
+  check: answer
+  prompt: X-Cache 값을 입력하세요
+- id: ttl
+  guide: 캐시 키는 `catalog:<id>` 예요. `PTTL` 은 남은 수명을 밀리초로 보여 줘요. 기본 TTL 은 30초예요.
+  command: agents/troubleshoot-lab/bin/lab exec redis -- redis-cli PTTL catalog:7
+  check: answer
+  prompt: PTTL 이 넘을 수 없는 최대값(밀리초)을 입력하세요
+- id: speed
+  guide: MISS 는 DB 를 다녀오고 HIT 는 메모리에서 끝나요. 새 항목(8번)을 두 번 요청해 시간을 비교해 보세요.
+  command: for i in 1 2; do curl -s -o /dev/null -w '%{time_total}\n' localhost:8080/api/catalog/8; done
+  check: answer
+  prompt: 두 번째가 더 빠른 이유는 HIT 와 MISS 중 무엇인가요?
+- id: ratio
+  guide: 적중률은 Redis 전체 통계로도 볼 수 있어요. 적중률이 낮으면 캐시가 있어도 DB 부하는 그대로예요.
+  command: agents/troubleshoot-lab/bin/lab exec redis -- 'redis-cli INFO stats | grep -E "keyspace_(hits|misses)"'
+  check: answer
+  prompt: 적중률 = keyspace_hits / (keyspace_hits + ?) 의 ? 항목 이름을 입력하세요

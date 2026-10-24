@@ -1,0 +1,53 @@
+name: troubleshoot-lab-sandbox
+
+# Real docker compose + kind: every scenario's inject/verify/reset and every mission's
+# steps (research R13). Only when practice content or the environment changes.
+on:
+  pull_request:
+    paths:
+      - "agents/troubleshoot-lab/environment/**"
+      - "agents/troubleshoot-lab/lib/**"
+      - "agents/troubleshoot-lab/missions/**"
+      - "agents/troubleshoot-lab/scenarios/**"
+      - ".github/workflows/troubleshoot-lab-sandbox.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: troubleshoot-lab-sandbox-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sandbox:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install kind
+        env:
+          KIND_VERSION: v0.27.0
+        run: |
+          curl -fsSLo kind "https://kind.sigs.k8s.io/dl/${KIND_VERSION}/kind-linux-amd64"
+          sudo install -m 0755 kind /usr/local/bin/kind
+
+      - name: Install
+        run: uv sync --package troubleshoot-lab --frozen
+
+      - name: Start practice environment
+        run: make -C agents/troubleshoot-lab up
+
+      - name: Sandbox tests
+        env:
+          LAB_SANDBOX_SKIP_UP: "1"
+        run: make -C agents/troubleshoot-lab test-sandbox
+
+      - name: Script logs on failure
+        if: failure()
+        run: tail -n 40 agents/troubleshoot-lab/.lab-state/logs/*.log || true

@@ -1,0 +1,28 @@
+id: socket-check
+env: compose
+kind: warmup
+title: 포트가 열려 있는지 확인하기
+minutes: 15
+goals:
+- ss -lntp 로 프로세스가 듣고 있는 주소와 포트를 본다
+- nc -vz 로 다른 서비스의 포트에 연결해 본다
+- 연결 성공과 거부를 구분한다
+steps:
+- id: listen
+  guide: |
+    Mac 호스트에는 이 리눅스 명령이 없거나 다르게 동작해요. `lab exec <서비스> -- <명령>` 은 진단 도구 컨테이너를 그 서비스의 네트워크·프로세스 공간에 붙여 실행해요(Claude Code에서는 `/lab-exec <서비스> <명령>`).
+    `ss -lntp` 는 듣고 있는(-l) TCP(-t) 소켓을 숫자로(-n), 프로세스와 함께(-p) 보여 줘요.
+    `Local Address:Port` 열이 `0.0.0.0:포트` 면 모든 주소에서, `127.0.0.1:포트` 면 자기 자신에게서만 연결을 받아요.
+  command: agents/troubleshoot-lab/bin/lab exec api -- ss -lntp
+  check: answer
+  prompt: uvicorn 이 듣고 있는 포트 번호를 입력하세요
+- id: reach
+  guide: '`nc -vz <호스트> <포트>` 는 데이터 없이 연결만 시도해요(-z). api 공간에서 redis 6379 로 연결해 보세요.'
+  command: agents/troubleshoot-lab/bin/lab exec api -- nc -vz -w 2 redis 6379
+  check: answer
+  prompt: succeeded 와 refused 중 어느 단어가 나왔나요?
+- id: closed
+  guide: 이번에는 아무도 듣지 않는 포트(6380)예요. 상대 호스트는 살아 있지만 그 포트에 프로세스가 없으면 '연결 거부'가 돼요.
+  command: agents/troubleshoot-lab/bin/lab exec api -- nc -vz -w 2 redis 6380
+  check: answer
+  prompt: succeeded 와 refused 중 어느 단어가 나왔나요?

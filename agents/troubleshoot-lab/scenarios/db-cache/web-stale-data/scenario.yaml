@@ -1,0 +1,23 @@
+id: web-stale-data
+curriculum_no: extra-2
+fields:
+- db-cache
+- webserver
+env: compose
+title: 데이터를 바꿔도 결과가 그대로예요
+difficulty: intermediate
+minutes: 45
+symptom: POST /api/items 로 항목을 추가하면 성공(201)하는데, GET /api/items 결과에는 한동안 새 항목이 나타나지 않아요.
+tags:
+- proxy-cache
+- cache-control
+- ignore-headers
+warmups:
+- http-headers
+- cache-headers
+start_hint: 'curl -s -X POST -H ''Content-Type: application/json'' -d ''{"name":"test"}'' localhost:8080/api/items; curl -s localhost:8080/api/items'
+measure:
+  path: /api/items
+  service: api
+interview:
+- 캐시 무효화는 언제, 어떻게 해야 하나요?

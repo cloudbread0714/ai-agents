@@ -1,0 +1,24 @@
+id: k8s-api-no-response
+curriculum_no: '15'
+fields:
+- lb-cloud
+- network
+env: kind
+title: Pod은 정상인데 응답이 없어요
+difficulty: intermediate
+minutes: 45
+symptom: api Pod은 모두 Running·Ready 인데 localhost:8081/api/items 가 502 를 돌려줘요.
+tags:
+- service
+- selector
+- endpoints
+- labels
+warmups:
+- k8s-service-basics
+- k8s-describe
+start_hint: eval "$(agents/troubleshoot-lab/bin/lab env)"; kubectl -n lab get pods,svc
+measure:
+  path: /api/items
+  service: api
+interview:
+- 서버는 정상인데 사용자가 접속할 수 없다면 무엇부터 확인하나요?

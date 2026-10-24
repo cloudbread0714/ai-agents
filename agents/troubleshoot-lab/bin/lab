@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Run the lab CLI with the source trees on PYTHONPATH, so it works even when the
+# editable install's .pth is skipped (e.g. a .venv inside an iCloud-synced folder).
+set -euo pipefail
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+export PYTHONPATH="$ROOT/shared/src:$ROOT/agents/troubleshoot-lab/src${PYTHONPATH:+:$PYTHONPATH}"
+exec uv run --quiet --project "$ROOT" --package troubleshoot-lab python -m troubleshoot_lab "$@"

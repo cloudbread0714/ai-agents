@@ -1,0 +1,30 @@
+id: k6-basics
+env: compose
+kind: warmup
+title: k6 부하 결과 읽기
+minutes: 20
+goals:
+- k6 로 정해진 시간 동안 동시 요청을 보낸다
+- 평균·p95·처리량(rps)·오류율을 결과에서 읽는다
+- 모든 요청이 실패하면 오류율이 어떻게 보이는지 안다
+steps:
+- id: rps
+  guide: |
+    k6 는 가상 사용자(VU)가 정해진 시간 동안 요청을 반복해 보내는 부하 도구예요. 여기서는 5 VU 로 10초 동안 보내요.
+    시나리오의 `/lab-measure` 도 같은 k6 를 써서 정상·장애·해결 후를 같은 방법으로 재요.
+    결과에서 `http_req_duration`(avg, p(95)), `http_reqs`(전체 수와 초당 수), `http_req_failed`(실패 비율)를 찾아보세요.
+  command: docker run --rm -i --network troubleshoot-lab_lab -e TARGET_URL=http://nginx/api/items grafana/k6:1.0.0 run --quiet --vus 5 --duration 10s - < agents/troubleshoot-lab/environment/k6/basic.js
+  check: answer
+  prompt: http_reqs 줄에서 /s 로 끝나는 값은 무슨 지표인가요? (rps/p95/error)
+- id: p95
+  guide: |
+    p(95) 는 응답 시간을 작은 순서로 줄 세웠을 때 95% 지점의 값이에요. 평균은 소수의 아주 느린 요청에 가려지지만,
+    p95 는 '대부분의 사용자가 겪는 최악'에 가까워서 장애 판단에 자주 써요.
+  command: docker run --rm -i --network troubleshoot-lab_lab -e TARGET_URL=http://nginx/api/items grafana/k6:1.0.0 run --quiet --vus 5 --duration 10s - < agents/troubleshoot-lab/environment/k6/basic.js
+  check: answer
+  prompt: p(95)=120ms 라면 요청의 몇 % 가 120ms 이하로 끝났나요? (숫자만)
+- id: errors
+  guide: '`/quiz-k6-error` 는 항상 503 을 돌려줘요. 4xx·5xx 응답은 k6 에서 실패로 세어져요.'
+  command: docker run --rm -i --network troubleshoot-lab_lab -e TARGET_URL=http://nginx/quiz-k6-error grafana/k6:1.0.0 run --quiet --vus 5 --duration 10s - < agents/troubleshoot-lab/environment/k6/basic.js
+  check: answer
+  prompt: 'http_req_failed 줄의 % 값을 그대로 입력하세요 (예: 12.34%)'

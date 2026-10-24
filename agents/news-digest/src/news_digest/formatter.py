@@ -6,15 +6,9 @@ from datetime import date
 from typing import Any
 
 from news_digest.models import Article, DigestSelection
+from shared.slack import escape_mrkdwn, slack_link
 
-
-def escape_mrkdwn(text: str) -> str:
-    return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-
-
-def _link(url: str, label: str) -> str:
-    safe_url = url.replace("|", "%7C").replace(">", "%3E").replace("<", "%3C")
-    return f"<{safe_url}|{escape_mrkdwn(label)}>"
+__all__ = ["build_post_payload", "escape_mrkdwn"]
 
 
 def _section(text: str) -> dict[str, Any]:
@@ -36,7 +30,7 @@ def build_post_payload(
             {"type": "header", "text": {"type": "plain_text", "text": title, "emoji": True}},
             _section(f"*내용*\n{summary}"),
             _section(f"*나에게 적용할 점*\n{points}"),
-            _section(f"*원문*  {_link(article.url, f'{article.source} 원문 보기')}"),
+            _section(f"*원문*  {slack_link(article.url, f'{article.source} 원문 보기')}"),
             {
                 "type": "context",
                 "elements": [

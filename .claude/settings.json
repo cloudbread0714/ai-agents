@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(agents/troubleshoot-lab/bin/lab list:*)",
+      "Bash(agents/troubleshoot-lab/bin/lab start:*)",
+      "Bash(agents/troubleshoot-lab/bin/lab hint:*)",
+      "Bash(agents/troubleshoot-lab/bin/lab check:*)",
+      "Bash(agents/troubleshoot-lab/bin/lab giveup:*)",
+      "Bash(agents/troubleshoot-lab/bin/lab reset:*)",
+      "Bash(agents/troubleshoot-lab/bin/lab validate:*)",
+      "Bash(agents/troubleshoot-lab/bin/lab env:*)"
+    ]
+  }
+}

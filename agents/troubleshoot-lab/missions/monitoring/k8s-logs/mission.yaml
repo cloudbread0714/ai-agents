@@ -1,0 +1,25 @@
+id: k8s-logs
+env: kind
+kind: warmup
+title: Pod 로그와 이전 로그
+minutes: 15
+goals:
+- kubectl logs 로 컨테이너 로그를 본다
+- --previous 로 재시작 전 컨테이너의 로그를 본다
+steps:
+- id: logs
+  guide: |
+    이 쉘에서 처음이라면 먼저 `eval "$(agents/troubleshoot-lab/bin/lab env)"` 를 실행해 실습 클러스터와 compose 설정을 잡아 두세요.
+    `kubectl logs <Pod>` 는 지금 실행 중인 컨테이너의 로그예요. quiz-logs Pod의 로그를 보세요.
+  command: kubectl -n lab logs quiz-logs
+  check: answer
+  prompt: 로그에 나온 request_id 값을 입력하세요
+- id: previous
+  guide: |
+    이 Pod은 처음 한 번 실패하고 재시작했어요(RESTARTS 1). 재시작하면 지금 로그에는 이전 실행의 기록이 없어요. `--previous` 로 직전 컨테이너의 로그를 볼 수 있어요.
+    CrashLoopBackOff 문제를 풀 때 가장 자주 쓰는 옵션이에요.
+  command: |
+    kubectl -n lab get pod quiz-logs
+    kubectl -n lab logs quiz-logs --previous
+  check: answer
+  prompt: 이전 실행이 남긴 code 값을 입력하세요

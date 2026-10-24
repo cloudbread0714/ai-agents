@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "troubleshoot-lab progress.json (version 2)",
+  "type": "object",
+  "required": ["version", "events"],
+  "additionalProperties": false,
+  "$defs": {
+    "metric": {
+      "oneOf": [
+        { "type": "object", "required": ["value"], "properties": { "value": { "type": "number" } }, "additionalProperties": false },
+        {
+          "type": "object",
+          "required": ["status"],
+          "properties": { "status": { "enum": ["unavailable", "skipped", "not_applicable"] } },
+          "additionalProperties": false
+        }
+      ]
+    }
+  },
+  "properties": {
+    "version": { "const": 2 },
+    "events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["ts", "type", "id"],
+        "additionalProperties": false,
+        "properties": {
+          "ts": { "type": "string", "format": "date-time" },
+          "type": {
+            "enum": [
+              "mission_completed",
+              "scenario_started",
+              "measured",
+              "fault_injected",
+              "hint_opened",
+              "scenario_solved",
+              "scenario_gave_up",
+              "scenario_reset",
+              "report_completed"
+            ]
+          },
+          "id": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" },
+          "attempt": { "type": "integer", "minimum": 1 },
+          "phase": { "enum": ["baseline", "fault", "after"] },
+          "metrics": {
+            "type": "object",
+            "required": ["avg_ms", "p95_ms", "rps", "error_rate", "requests", "cpu_avg_pct", "cpu_max_pct", "mem_max_mib"],
+            "additionalProperties": false,
+            "properties": {
+              "avg_ms": { "$ref": "#/$defs/metric" },
+              "p95_ms": { "$ref": "#/$defs/metric" },
+              "rps": { "$ref": "#/$defs/metric" },
+              "error_rate": { "$ref": "#/$defs/metric" },
+              "requests": { "$ref": "#/$defs/metric" },
+              "cpu_avg_pct": { "$ref": "#/$defs/metric" },
+              "cpu_max_pct": { "$ref": "#/$defs/metric" },
+              "mem_max_mib": { "$ref": "#/$defs/metric" }
+            }
+          },
+          "skip_reason": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "level": { "type": "integer", "minimum": 1, "maximum": 3 },
+          "hints_used": { "type": "integer", "minimum": 0, "maximum": 3 },
+          "was_active": { "type": "boolean" },
+          "report": { "type": "string", "pattern": "^agents/troubleshoot-lab/docs/reports/.+\\.md$" },
+          "answered": { "type": "integer", "minimum": 0, "maximum": 2 }
+        },
+        "allOf": [
+          { "if": { "properties": { "type": { "const": "hint_opened" } } }, "then": { "required": ["level", "attempt"] } },
+          { "if": { "properties": { "type": { "const": "measured" } } }, "then": { "required": ["attempt", "phase", "metrics"] } },
+          {
+            "if": { "properties": { "type": { "enum": ["scenario_solved", "scenario_gave_up"] } } },
+            "then": { "required": ["hints_used", "attempt"] }
+          },
+          { "if": { "properties": { "type": { "const": "report_completed" } } }, "then": { "required": ["report", "answered", "attempt"] } },
+          {
+            "if": { "properties": { "type": { "enum": ["scenario_started", "fault_injected", "scenario_reset"] } } },
+            "then": { "required": ["attempt"] }
+          }
+        ]
+      }
+    }
+  }
+}

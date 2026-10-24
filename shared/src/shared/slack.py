@@ -29,6 +29,16 @@ def mask_webhook(url: str) -> str:
     return _WEBHOOK_RE.sub(r"\1***", url)
 
 
+def escape_mrkdwn(text: str) -> str:
+    """Escape the three characters Slack mrkdwn treats as control characters."""
+    return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+
+def slack_link(url: str, label: str) -> str:
+    safe_url = url.replace("|", "%7C").replace(">", "%3E").replace("<", "%3C")
+    return f"<{safe_url}|{escape_mrkdwn(label)}>"
+
+
 def send_webhook(
     url: str,
     payload: dict[str, Any],

@@ -1,0 +1,30 @@
+id: docker-run-basics
+env: compose
+kind: warmup
+title: 컨테이너 실행·확인·중지
+minutes: 15
+goals:
+- docker run 의 -d, --name, -p 옵션을 이해한다
+- docker ps 로 실행 중인 컨테이너와 포트를 읽는다
+- docker stop 으로 컨테이너를 멈춘다
+steps:
+- id: run
+  guide: '`docker run -d` 는 컨테이너를 백그라운드로 실행해요. `--name` 으로 이름을, `-p 호스트포트:컨테이너포트` 로 포트 연결을 지정합니다.'
+  command: docker run -d --name lab-web -p 8090:80 nginx:1.27-alpine
+  check: state
+- id: curl
+  guide: 호스트의 8090 포트로 요청하면 컨테이너 안 nginx의 80 포트로 전달돼요. 기본 페이지의 제목을 확인해 보세요.
+  command: curl -s localhost:8090 | grep -o '<title>[^<]*</title>'
+  check: answer
+  prompt: <title> 태그 안의 문장을 입력하세요
+- id: ps
+  guide: '`docker ps` 는 실행 중인 컨테이너 목록이에요. PORTS 칸에서 어떤 호스트 포트가 어떤 컨테이너 포트로 연결됐는지 읽을 수 있어요.'
+  command: docker ps --filter name=lab-web
+  check: answer
+  prompt: 'PORTS 칸의 ''호스트포트->컨테이너포트'' 부분을 입력하세요 (예: 1234->80)'
+- id: stop
+  guide: '`docker stop` 은 컨테이너에 종료 신호를 보내고 멈춥니다. 멈춘 컨테이너는 `docker ps -a` 에서 Exited 로 보여요.'
+  command: |
+    docker stop lab-web
+    docker ps -a --filter name=lab-web
+  check: state

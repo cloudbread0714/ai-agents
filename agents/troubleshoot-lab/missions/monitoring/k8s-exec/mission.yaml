@@ -1,0 +1,27 @@
+id: k8s-exec
+env: kind
+kind: warmup
+title: Pod 안에서 명령 실행
+minutes: 15
+goals:
+- kubectl exec 로 Pod 안에서 명령을 실행한다
+- Pod 안에서 Service 이름이 어떻게 풀리는지 확인한다
+steps:
+- id: env
+  guide: |
+    이 쉘에서 처음이라면 먼저 `eval "$(agents/troubleshoot-lab/bin/lab env)"` 를 실행해 실습 클러스터와 compose 설정을 잡아 두세요.
+    `kubectl exec <Pod> -- <명령>` 은 Pod 안에서 명령을 실행해요. `--` 뒤가 컨테이너 안에서 실행할 명령이에요.
+    쉘로 들어가려면 `kubectl -n lab exec -it quiz-exec -- sh` 처럼 `-it` 를 붙이면 돼요.
+  command: kubectl -n lab exec quiz-exec -- printenv WORD
+  check: answer
+  prompt: WORD 값을 입력하세요
+- id: file
+  guide: Pod 안의 파일도 같은 방식으로 볼 수 있어요.
+  command: kubectl -n lab exec quiz-exec -- cat /tmp/note.txt
+  check: answer
+  prompt: 파일 내용을 입력하세요
+- id: dns
+  guide: 클러스터 안에서는 Service 이름이 DNS로 풀려요. `<서비스>.<네임스페이스>.svc.cluster.local` 형식이에요.
+  command: kubectl -n lab exec quiz-exec -- nslookup api.lab.svc.cluster.local
+  check: answer
+  prompt: api Service의 IP 주소(Address)를 입력하세요

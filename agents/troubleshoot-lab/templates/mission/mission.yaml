@@ -1,0 +1,13 @@
+# 복사 후: 디렉터리 이름 = id. 카테고리는 상위 디렉터리(docker | kubernetes | web)로 정해져요.
+id: my-mission
+title: 미션 제목 (60자 이내)
+goals:
+  - 이 미션으로 익힐 것 1
+steps:
+  - id: look
+    guide: |
+      이 단계에서 배울 개념을 설명하세요.
+    # 레포 루트에서 그대로 복사해 실행할 수 있는 비대화형 명령 (-it, 에디터, 페이저 금지)
+    command: kubectl -n lab get pods
+    check: answer          # state = 환경 상태로 판정, answer = 사용자가 값을 입력
+    prompt: 무엇을 입력할지 설명하세요   # check: answer 일 때 필수

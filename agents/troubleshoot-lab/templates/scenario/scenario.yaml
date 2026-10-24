@@ -1,0 +1,8 @@
+# 복사 후: 디렉터리 이름 = id. id·title·symptom 에 원인을 드러내는 단어를 쓰지 마세요.
+id: my-symptom-name
+title: 증상을 설명하는 제목
+difficulty: beginner        # beginner | intermediate | advanced
+symptom: 사용자가 보게 될 증상 (Slack에 그대로 게시돼요)
+tags: [cause-keyword]       # 작성자용. 어디에도 게시되지 않아요
+warmups: [some-mission]     # 1~2개, 존재하는 미션 id
+start_hint: curl -i localhost:8080/healthz   # 시작 직후 증상을 확인하는 명령 (CLI에만 표시)

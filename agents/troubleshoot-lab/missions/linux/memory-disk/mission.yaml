@@ -1,0 +1,35 @@
+id: memory-disk
+env: compose
+kind: warmup
+title: 메모리와 디스크 사용량 읽기
+minutes: 15
+goals:
+- free 로 메모리의 used 와 available 을 구분한다
+- vmstat 로 CPU·메모리·스왑 흐름을 본다
+- df, du 로 디스크를 채운 파일을 찾는다
+steps:
+- id: free
+  guide: |
+    Mac 호스트에는 이 리눅스 명령이 없거나 다르게 동작해요. `lab exec <서비스> -- <명령>` 은 진단 도구 컨테이너를 그 서비스의 네트워크·프로세스 공간에 붙여 실행해요(Claude Code에서는 `/lab-exec <서비스> <명령>`).
+    `free -m` 은 메모리를 MiB 단위로 보여 줘요. 리눅스는 남는 메모리를 캐시(buff/cache)로 쓰기 때문에 `free` 열이 작아도 정상일 수 있어요.
+    새 프로그램이 실제로 쓸 수 있는 양은 다른 열이에요. 컨테이너 안에서는 호스트(Docker VM) 전체 메모리가 보인다는 점도 기억하세요.
+  command: agents/troubleshoot-lab/bin/lab exec api -- free -m
+  check: answer
+  prompt: 새 프로그램이 실제로 쓸 수 있는 메모리를 나타내는 열 이름을 입력하세요
+- id: vmstat
+  guide: |
+    `vmstat 1 3` 은 1초 간격으로 3번 찍어요. `r`(CPU를 기다리는 프로세스), `si/so`(스왑 입출력), `us/sy/id/wa`(CPU 비율)를 봐요.
+    첫 줄은 부팅 이후 평균이라 둘째 줄부터 읽어요.
+  command: agents/troubleshoot-lab/bin/lab exec api -- vmstat 1 3
+  check: answer
+  prompt: CPU가 놀고 있는 비율을 나타내는 열 이름을 입력하세요
+- id: df
+  guide: '`df -h` 는 파일 시스템별 크기와 사용률을 보여 줘요. api 는 로그를 크기 제한이 있는 `/var/log/app` 에 써요.'
+  command: agents/troubleshoot-lab/bin/lab exec api -- df -h /var/log/app
+  check: answer
+  prompt: 이 파일 시스템의 전체 크기(Size)를 입력하세요
+- id: du
+  guide: '`df` 로 가득 찬 곳을 찾았다면 `du -sh` 로 무엇이 공간을 쓰는지 찾아요.'
+  command: agents/troubleshoot-lab/bin/lab exec api -- 'du -sh /var/log/app/* | sort -h'
+  check: answer
+  prompt: 가장 큰 파일의 이름을 입력하세요

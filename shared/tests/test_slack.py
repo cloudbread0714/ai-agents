@@ -58,3 +58,11 @@ def test_logs_never_contain_webhook_secret(httpx_mock, caplog):
 
 def test_mask_webhook():
     assert mask_webhook(URL) == "https://hooks.slack.com/services/***"
+
+
+def test_escape_mrkdwn_and_link():
+    from shared.slack import escape_mrkdwn, slack_link
+
+    assert escape_mrkdwn("a & <b>") == "a &amp; &lt;b&gt;"
+    link = slack_link("https://x.dev/a|b<c>", "AWS <blog>")
+    assert link == "<https://x.dev/a%7Cb%3Cc%3E|AWS &lt;blog&gt;>"

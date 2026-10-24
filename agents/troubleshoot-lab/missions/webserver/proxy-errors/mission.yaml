@@ -1,0 +1,29 @@
+id: proxy-errors
+env: compose
+kind: warmup
+title: 502와 504 구분하기
+minutes: 20
+goals:
+- 업스트림이 연결을 거부할 때 nginx 가 502 를 내는 것을 본다
+- 업스트림이 응답하지 않을 때 504 를 내는 것을 본다
+- nginx 오류 로그에서 원인 줄을 찾는다
+steps:
+- id: bad-gateway
+  guide: nginx 같은 리버스 프록시는 뒤쪽 서버(업스트림)에 요청을 전달해요. `/quiz-502` 는 아무도 듣지 않는 포트로 전달하게 해 뒀어요.
+  command: curl -s -o /dev/null -w '%{http_code}\n' localhost:8080/quiz-502
+  check: answer
+  prompt: 상태 코드를 입력하세요
+- id: timeout
+  guide: |
+    `/quiz-504` 는 연결은 받지만 대답하지 않는 업스트림(lab-hang)으로 전달하고, `proxy_read_timeout` 을 2초로 뒀어요.
+    얼마나 걸리는지도 함께 보세요.
+  command: curl -s -o /dev/null -w '%{http_code} %{time_total}s\n' localhost:8080/quiz-504
+  check: answer
+  prompt: 상태 코드를 입력하세요
+- id: log
+  guide: |
+    nginx 는 업스트림 오류를 오류 로그에 남기고, 이 이미지는 그 로그를 컨테이너 로그로 보내요. (이 쉘에서 처음이면 먼저 `eval "$(agents/troubleshoot-lab/bin/lab env)"`)
+    502 줄에는 `connect() failed (번호: 이유)`, 504 줄에는 `upstream timed out (번호: 이유)` 가 있어요.
+  command: docker compose logs --tail 10 nginx
+  check: answer
+  prompt: connect() failed 괄호 안의 오류 번호를 입력하세요

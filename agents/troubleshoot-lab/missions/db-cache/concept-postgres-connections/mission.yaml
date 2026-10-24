@@ -1,0 +1,40 @@
+id: concept-postgres-connections
+env: compose
+kind: concept
+title: PostgreSQL 연결 구조
+minutes: 60
+goals:
+- 연결 하나가 서버 프로세스 하나라는 것을 본다
+- max_connections 와 커넥션 풀의 관계를 설명한다
+- pg_stat_activity 로 연결 상태를 분류한다
+steps:
+- id: max
+  guide: |
+    Mac 호스트에는 이 리눅스 명령이 없거나 다르게 동작해요. `lab exec <서비스> -- <명령>` 은 진단 도구 컨테이너를 그 서비스의 네트워크·프로세스 공간에 붙여 실행해요(Claude Code에서는 `/lab-exec <서비스> <명령>`).
+    **읽기**: `docs/curriculum.md` 의 '④ 데이터베이스와 캐시' 절과 '실습 C. DB 연결 고갈'을 먼저 읽어요(20분).
+
+    PostgreSQL 은 동시에 받을 수 있는 연결 수에 상한이 있어요.
+  command: agents/troubleshoot-lab/bin/lab exec postgres -- "PGPASSWORD=lab psql -h localhost -U lab -d lab -Atc 'SHOW max_connections'"
+  check: answer
+  prompt: 출력된 값을 입력하세요
+- id: process
+  guide: |
+    PostgreSQL 은 연결 하나마다 서버 프로세스(backend)를 하나 띄워요. 그래서 연결을 맺는 일은 비싸고,
+    애플리케이션은 연결을 미리 열어 두고 빌려 쓰는 커넥션 풀을 써요. 프로세스 목록에서 `postgres: 사용자 DB 주소 상태` 형식의 줄을 찾아보세요.
+  command: 'agents/troubleshoot-lab/bin/lab exec postgres -- ''ps -eo pid,args | grep "postgres: "'''
+  check: answer
+  prompt: 연결 프로세스 줄에 보이는 사용자 이름을 입력하세요
+- id: states
+  guide: |
+    `pg_stat_activity` 의 state 로 연결을 나눠 봐요. active(쿼리 중), idle(쉬는 중), idle in transaction(트랜잭션을 연 채 쉬는 중).
+    마지막 것이 오래 남으면 잠금과 연결을 붙잡고 있어 위험해요.
+  command: agents/troubleshoot-lab/bin/lab exec postgres -- "PGPASSWORD=lab psql -h localhost -U lab -d lab -c \"SELECT state, count(*) FROM pg_stat_activity WHERE datname = 'lab' GROUP BY state\""
+  check: answer
+  prompt: 쿼리를 실행하지 않고 쉬는 연결의 state 이름을 입력하세요
+- id: pool
+  guide: |
+    풀 크기가 10 이고 요청 20개가 동시에 오면 10개는 빈 연결을 기다려요. 기다림이 획득 타임아웃을 넘으면 오류가 나요.
+    DB 의 max_connections 는 모든 앱 인스턴스의 풀 크기 합보다 커야 해요. 아래는 api 가 실제로 쓰는 풀 크기 설정이에요.
+  command: docker compose exec -T api printenv DB_POOL_SIZE || echo '10 (기본값)'
+  check: answer
+  prompt: api 인스턴스가 3개고 풀 크기가 각 10 이면 DB 에 최대 몇 개의 연결이 필요한가요? (숫자만)

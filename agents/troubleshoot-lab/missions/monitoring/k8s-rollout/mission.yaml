@@ -1,0 +1,29 @@
+id: k8s-rollout
+env: kind
+kind: warmup
+title: 배포 수정과 롤백
+minutes: 20
+goals:
+- Deployment를 수정하면 새 ReplicaSet으로 롤아웃된다는 것을 안다
+- rollout status·history 로 배포 상태를 본다
+- rollout undo 로 이전 버전으로 되돌린다
+steps:
+- id: update
+  guide: |
+    이 쉘에서 처음이라면 먼저 `eval "$(agents/troubleshoot-lab/bin/lab env)"` 를 실행해 실습 클러스터와 compose 설정을 잡아 두세요.
+    Deployment의 Pod 템플릿(이미지, 환경변수 등)을 바꾸면 새 Pod이 차례로 만들어지는 롤아웃이 시작돼요. api의 APP_VERSION을 2.0.0으로 바꾸고 롤아웃이 끝날 때까지 기다려 보세요.
+  command: |
+    kubectl -n lab set env deploy/api APP_VERSION=2.0.0
+    kubectl -n lab rollout status deploy/api
+  check: state
+- id: history
+  guide: 배포할 때마다 리비전이 하나씩 쌓여요. `rollout history` 로 목록을 볼 수 있어요.
+  command: kubectl -n lab rollout history deploy/api
+  check: answer
+  prompt: 가장 큰 REVISION 번호를 입력하세요
+- id: undo
+  guide: 문제가 생기면 `rollout undo` 로 직전 리비전으로 되돌려요. 되돌린 뒤 APP_VERSION이 1.0.0으로 돌아왔는지 확인하세요.
+  command: |
+    kubectl -n lab rollout undo deploy/api
+    kubectl -n lab rollout status deploy/api
+  check: state

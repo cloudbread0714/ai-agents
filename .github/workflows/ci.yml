@@ -33,3 +33,7 @@ jobs:
 
       - name: Test
         run: uv run pytest
+
+      - name: Test lab sample API
+        # Separate uv project, excluded from the workspace (research R16)
+        run: uv run --directory agents/troubleshoot-lab/environment/api pytest

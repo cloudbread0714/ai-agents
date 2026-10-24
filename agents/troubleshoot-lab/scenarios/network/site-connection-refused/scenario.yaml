@@ -1,0 +1,24 @@
+id: site-connection-refused
+curriculum_no: '3'
+fields:
+- network
+- webserver
+env: compose
+title: 웹 서비스에 접속이 안 돼요
+difficulty: beginner
+minutes: 40
+symptom: localhost:8080 으로 요청하면 응답 없이 연결이 바로 거부돼요. 조금 전까지는 잘 됐어요.
+tags:
+- nginx
+- config
+- syntax
+- exited
+warmups:
+- socket-check
+- docker-logs
+start_hint: curl -i localhost:8080/healthz
+measure:
+  path: /healthz
+  service: nginx
+interview:
+- Connection Refused와 Connection Timeout은 어떻게 다른가요?

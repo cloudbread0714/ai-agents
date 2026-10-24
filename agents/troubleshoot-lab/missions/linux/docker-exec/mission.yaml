@@ -1,0 +1,21 @@
+id: docker-exec
+env: compose
+kind: warmup
+title: 컨테이너 안에 들어가 보기
+minutes: 10
+goals:
+- docker exec 로 실행 중인 컨테이너 안에서 명령을 실행한다
+- 컨테이너의 환경변수와 파일을 확인한다
+steps:
+- id: env
+  guide: |
+    `docker exec <컨테이너> <명령>` 은 실행 중인 컨테이너 안에서 명령을 하나 실행해요. 컨테이너에 설정된 환경변수를 확인해 보세요.
+    쉘로 들어가려면 `docker exec -it lab-box sh` 처럼 `-it` 를 붙이면 돼요(나올 때는 exit).
+  command: docker exec lab-box printenv LAB_WORD
+  check: answer
+  prompt: 출력된 LAB_WORD 값을 입력하세요
+- id: file
+  guide: 컨테이너 안의 파일도 같은 방식으로 읽을 수 있어요.
+  command: docker exec lab-box cat /tmp/note.txt
+  check: answer
+  prompt: 파일 내용을 입력하세요

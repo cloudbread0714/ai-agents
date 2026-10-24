@@ -1,0 +1,40 @@
+id: concept-reverse-proxy
+env: compose
+kind: concept
+title: Nginx 리버스 프록시 구조
+minutes: 60
+goals:
+- nginx -T 로 실제 적용된 설정을 읽는다
+- /api/ 요청이 api 로 전달될 때 경로가 어떻게 바뀌는지 본다
+- 프록시 타임아웃과 location 을 직접 다뤄 본다
+steps:
+- id: upstream
+  guide: |
+    **읽기**: `docs/curriculum.md` 의 '③ 웹 서버와 소켓' 절을 먼저 읽어요(20분). (이 쉘에서 처음이면 먼저 `eval "$(agents/troubleshoot-lab/bin/lab env)"`)
+
+    리버스 프록시는 클라이언트 대신 뒤쪽 서버(업스트림)에 요청을 전달하고 응답을 돌려줘요.
+    `nginx -T` 는 설정을 검사하고 include 된 파일까지 합친 전체 설정을 출력해요.
+  command: docker compose exec -T nginx nginx -T 2>/dev/null | grep -n -E 'location|proxy_pass|set \$api_host'
+  check: answer
+  prompt: /api/ 요청이 전달되는 api 의 포트 번호를 입력하세요
+- id: timeout
+  guide: '`proxy_read_timeout` 은 업스트림의 응답을 기다리는 최대 시간이에요. 넘으면 nginx 는 504 Gateway Timeout 을 돌려줘요.'
+  command: docker compose exec -T nginx nginx -T 2>/dev/null | grep proxy_read_timeout
+  check: answer
+  prompt: '설정된 값을 입력하세요 (예: 10s)'
+- id: rewrite
+  guide: '`rewrite ^/api/(.*)$ /$1 break;` 때문에 api 는 `/api` 가 빠진 경로를 받아요. api 로그에서 실제로 받은 경로를 확인해 보세요.'
+  command: curl -s localhost:8080/api/version; echo; docker compose logs --tail 3 api
+  check: answer
+  prompt: api 로그에 찍힌 요청 경로를 입력하세요
+- id: server
+  guide: 클라이언트는 nginx 와만 이야기해요. 응답 헤더의 `Server` 가 그 증거예요.
+  command: curl -sI localhost:8080/api/version
+  check: answer
+  prompt: Server 헤더의 프로그램 이름을 입력하세요 (버전 제외)
+- id: location
+  guide: |
+    직접 location 을 하나 추가해 봐요. 실습 설정의 작업 사본에 파일을 쓰고 설정을 다시 읽게(reload) 해요.
+    reload 는 nginx 를 멈추지 않고 새 설정을 적용해요. 끝낸 뒤 `/lab-check location`.
+  command: printf 'location = /hello {\n    default_type text/plain;\n    return 200 "hi\\n";\n}\n' > agents/troubleshoot-lab/.lab-state/work/nginx/locations/hello.conf && docker compose exec -T nginx nginx -s reload
+  check: state

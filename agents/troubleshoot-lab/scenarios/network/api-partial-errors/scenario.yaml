@@ -1,0 +1,23 @@
+id: api-partial-errors
+curriculum_no: '2'
+fields:
+- network
+env: compose
+title: 일부 API만 500 오류가 나요
+difficulty: beginner
+minutes: 45
+symptom: localhost:8080/api/items 는 정상인데 /api/counter 는 500 Internal Server Error 를 돌려줘요. 모든 컨테이너가 Up 상태예요.
+tags:
+- network
+- dns
+- redis
+- alias
+warmups:
+- dns-lookup
+- docker-exec
+start_hint: curl -i localhost:8080/api/counter
+measure:
+  path: /api/counter
+  service: api
+interview:
+- 도메인(서비스 이름)으로 접속이 안 될 때 DNS 문제인지 어떻게 확인하나요?

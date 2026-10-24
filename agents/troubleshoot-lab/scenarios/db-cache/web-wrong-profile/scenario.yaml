@@ -1,0 +1,24 @@
+id: web-wrong-profile
+curriculum_no: extra-3
+fields:
+- db-cache
+- webserver
+env: compose
+title: 가끔 다른 사람의 정보가 보여요
+difficulty: advanced
+minutes: 45
+symptom: 쿠키(user)를 바꿔서 /api/profile 을 요청해도 다른 사람의 이름이 나와요.
+tags:
+- shared-cache
+- cookie
+- private
+- cache-key
+warmups:
+- cache-headers
+- curl-basics
+start_hint: curl -s --cookie user=bob localhost:8080/api/profile
+measure:
+  path: /api/profile
+  service: api
+interview:
+- 공유 캐시에 사용자별 응답이 저장되면 어떤 문제가 생기나요?

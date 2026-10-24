@@ -1,0 +1,28 @@
+id: k8s-service-basics
+env: kind
+kind: warmup
+title: Service 와 엔드포인트
+minutes: 20
+goals:
+- Service가 selector(라벨)로 Pod을 고른다는 것을 안다
+- 라벨을 붙여 Pod을 Service에 연결한다
+- EndpointSlice로 Service 뒤의 Pod 주소를 확인한다
+steps:
+- id: selector
+  guide: |
+    이 쉘에서 처음이라면 먼저 `eval "$(agents/troubleshoot-lab/bin/lab env)"` 를 실행해 실습 클러스터와 compose 설정을 잡아 두세요.
+    Service는 selector에 적힌 라벨을 가진 Pod으로 트래픽을 보내요. `-o wide` 로 보면 SELECTOR 칸이 나와요.
+  command: kubectl -n lab get svc quiz-svc -o wide
+  check: answer
+  prompt: SELECTOR 의 quiz= 뒤의 값을 입력하세요
+- id: connect
+  guide: |
+    지금 quiz-backend Pod에는 그 라벨이 없어서 Service가 비어 있어요. Pod에 라벨을 붙여 Service에 연결하세요.
+    아래 명령은 Service의 selector 값을 읽어 그대로 라벨로 붙여요.
+  command: kubectl -n lab label pod quiz-backend quiz=$(kubectl -n lab get svc quiz-svc -o jsonpath='{.spec.selector.quiz}') --overwrite
+  check: state
+- id: endpoints
+  guide: Service 뒤에 실제로 연결된 Pod 주소는 EndpointSlice에 있어요. 방금 붙인 Pod의 IP와 포트가 보일 거예요.
+  command: kubectl -n lab get endpointslices -l kubernetes.io/service-name=quiz-svc
+  check: answer
+  prompt: PORTS 칸의 숫자를 입력하세요
