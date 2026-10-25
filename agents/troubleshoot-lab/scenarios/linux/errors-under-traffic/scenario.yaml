@@ -16,7 +16,7 @@ tags:
 warmups:
 - fd-limits
 - k6-basics
-start_hint: curl -s --parallel --parallel-max 40 -o /dev/null -w '%{http_code}\n' $(printf 'localhost:8080/api/upstream?%s ' $(seq 200)) | sort | uniq -c
+start_hint: curl -s --parallel --parallel-immediate --parallel-max 40 -o /dev/null -w '%{http_code}\n' $(printf 'localhost:8080/api/upstream?%s ' $(seq 200)) | sort | uniq -c
 measure:
   path: /api/upstream
   service: api

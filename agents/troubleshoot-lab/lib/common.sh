@@ -97,7 +97,10 @@ http_burst() {
   shift 3
   local urls=()
   for ((i = 0; i < count; i++)); do urls+=("$url" -o /dev/null); done
-  curl -s --parallel --parallel-max "$parallel" --max-time 5 -w '%{http_code}\n' "$@" "${urls[@]}" || true
+  # --parallel-immediate: open all connections at once. Otherwise curl waits for the first
+  # response to see whether it can multiplex, and the rest arrive after it (HTTP/1.1).
+  curl -s --parallel --parallel-immediate --parallel-max "$parallel" --max-time 5 \
+    -w '%{http_code}\n' "$@" "${urls[@]}" || true
 }
 
 # http_burst_ok <count> <parallel> <url> [curl args...]: true when every request returned 200.
