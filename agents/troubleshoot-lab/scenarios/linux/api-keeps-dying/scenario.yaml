@@ -1,0 +1,23 @@
+id: api-keeps-dying
+curriculum_no: '8'
+fields:
+- linux
+- monitoring
+env: compose
+title: API가 잊을 만하면 죽어요
+difficulty: intermediate
+minutes: 45
+symptom: localhost:8080/api/items 가 잘 되다가 가끔 502가 나요. api 컨테이너가 가끔 다시 시작된 것처럼 보여요.
+tags:
+- memory-leak
+- oom-killed
+- mem-limit
+warmups:
+- memory-disk
+- docker-logs
+start_hint: for i in $(seq 40); do curl -s -o /dev/null -w '%{http_code} ' localhost:8080/api/items; done; echo
+measure:
+  path: /api/items
+  service: api
+interview:
+- 갑자기 트래픽이 10배 증가하면 어떤 장애가 생길 수 있나요?

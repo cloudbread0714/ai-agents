@@ -1,0 +1,22 @@
+id: k8s-api-crashing
+curriculum_no: '18'
+fields:
+- monitoring
+env: kind
+title: API Pod이 계속 다시 시작돼요
+difficulty: intermediate
+minutes: 40
+symptom: localhost:8081/api/items 가 502 를 돌려줘요. api Pod이 Running 상태를 유지하지 못해요.
+tags:
+- crashloopbackoff
+- command
+- rollout-undo
+warmups:
+- k8s-get-pods
+- k8s-logs
+start_hint: eval "$(agents/troubleshoot-lab/bin/lab env)"; kubectl -n lab get pods
+measure:
+  path: /api/items
+  service: api
+interview:
+- 배포 직후 장애가 발생하면 어떻게 대응하나요?

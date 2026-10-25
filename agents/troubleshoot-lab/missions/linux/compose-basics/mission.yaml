@@ -1,0 +1,30 @@
+id: compose-basics
+env: compose
+kind: warmup
+title: docker compose 다루기
+minutes: 15
+goals:
+- compose 프로젝트의 서비스 목록과 상태를 본다
+- 서비스별 로그를 본다
+- 서비스 하나만 재시작한다
+steps:
+- id: ps
+  guide: |
+    실습 환경은 docker compose 프로젝트 `troubleshoot-lab` 이에요. 이 쉘에서 처음이라면 먼저 `eval "$(agents/troubleshoot-lab/bin/lab env)"` 를 실행해 실습 클러스터와 compose 설정을 잡아 두세요.
+    `docker compose ps` 는 이 프로젝트의 서비스와 상태를 보여 줘요.
+  command: |
+    eval "$(agents/troubleshoot-lab/bin/lab env)"
+    docker compose ps
+  check: answer
+  prompt: 실행 중인 서비스 개수를 숫자로 입력하세요
+- id: logs
+  guide: '`docker compose logs <서비스>` 로 서비스 하나의 로그만 볼 수 있어요. 미션을 시작할 때 api에 표시(mark)가 붙은 요청을 하나 보내 두었어요.'
+  command: docker compose logs api | grep mark=
+  check: answer
+  prompt: 요청 경로에 붙은 mark 값을 입력하세요
+- id: restart
+  guide: '`docker compose restart <서비스>` 는 그 서비스의 컨테이너만 다시 시작해요. nginx를 재시작해 보세요.'
+  command: |
+    docker compose restart nginx
+    docker compose ps nginx
+  check: state

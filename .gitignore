@@ -25,3 +25,7 @@ agents/job-apply/data/private/
 .DS_Store
 .idea/
 .vscode/
+
+# troubleshoot-lab local state and dedicated kubeconfig
+agents/troubleshoot-lab/.lab-state/
+agents/troubleshoot-lab/environment/.kube/

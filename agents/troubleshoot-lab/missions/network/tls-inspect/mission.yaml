@@ -1,0 +1,30 @@
+id: tls-inspect
+env: compose
+kind: warmup
+title: HTTPS 인증서 읽어 보기
+minutes: 20
+goals:
+- openssl s_client 로 서버 인증서를 받아 본다
+- 인증서의 발급자와 SAN(이름 목록)을 읽는다
+- 신뢰할 수 없는 인증서일 때 curl 이 어떻게 실패하는지 본다
+steps:
+- id: issuer
+  guide: |
+    Mac 호스트에는 이 리눅스 명령이 없거나 다르게 동작해요. `lab exec <서비스> -- <명령>` 은 진단 도구 컨테이너를 그 서비스의 네트워크·프로세스 공간에 붙여 실행해요(Claude Code에서는 `/lab-exec <서비스> <명령>`).
+    HTTPS 서버는 TLS 핸드셰이크 때 인증서를 보내요. `openssl s_client` 로 그 인증서를 받아 `openssl x509` 로 읽을 수 있어요.
+    `-servername` 은 접속하려는 이름(SNI)을 알려 줘요. issuer 는 이 인증서에 서명한 기관(CA)이에요.
+  command: agents/troubleshoot-lab/bin/lab exec nginx -- 'openssl s_client -connect localhost:443 -servername localhost </dev/null 2>/dev/null | openssl x509 -noout -subject -issuer -dates'
+  check: answer
+  prompt: issuer 의 CN 값을 입력하세요
+- id: san
+  guide: 브라우저와 curl 은 주소창의 이름이 인증서의 SAN(Subject Alternative Name) 목록에 있는지 확인해요. CN 만 맞아서는 안 돼요.
+  command: agents/troubleshoot-lab/bin/lab exec nginx -- 'openssl s_client -connect localhost:443 -servername localhost </dev/null 2>/dev/null | openssl x509 -noout -ext subjectAltName'
+  check: answer
+  prompt: 'DNS: 로 시작하는 이름 중 localhost 가 아닌 것을 입력하세요'
+- id: trust
+  guide: |
+    이 인증서는 실습용 CA가 서명했기 때문에 호스트의 curl 은 믿지 않아요. 신뢰 실패는 종료 코드 60이에요.
+    `--cacert agents/troubleshoot-lab/.lab-state/work/nginx/certs/ca.pem` 을 붙이면 같은 요청이 성공해요. 두 가지를 모두 해 보세요.
+  command: curl -s -o /dev/null https://localhost:8443/healthz; echo "exit=$?"
+  check: answer
+  prompt: --cacert 없이 실행했을 때의 종료 코드를 입력하세요

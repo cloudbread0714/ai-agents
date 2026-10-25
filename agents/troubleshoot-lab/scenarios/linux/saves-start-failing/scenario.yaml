@@ -1,0 +1,24 @@
+id: saves-start-failing
+curriculum_no: '9'
+fields:
+- linux
+env: compose
+title: 저장이 갑자기 실패하기 시작했어요
+difficulty: intermediate
+minutes: 50
+symptom: localhost:8080/api/items 로 POST 하면 500 Internal Server Error 가 나요. 조금 전까지는 잘 저장됐어요.
+tags:
+- disk-full
+- enospc
+- log-volume
+- verbose-log
+warmups:
+- memory-disk
+start_hint: 'curl -i -X POST -H ''Content-Type: application/json'' -d ''{"name":"test"}'' localhost:8080/api/items'
+measure:
+  method: POST
+  path: /api/items
+  body: '{"name":"k6"}'
+  service: api
+interview:
+- 디스크가 가득 차면 서비스에 어떤 증상이 나타나고, 무엇부터 확인하나요?

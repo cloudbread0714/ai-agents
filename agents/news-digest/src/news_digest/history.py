@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
-import os
-import tempfile
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
 from news_digest.models import Category, History, PostRecord
+from shared.files import write_text_atomic
 
 RETENTION = timedelta(days=365)
 
@@ -21,16 +20,7 @@ def load(path: Path) -> History:
 def save(path: Path, history: History, *, now: datetime) -> None:
     """Prune entries older than a year, then write atomically (temp file + rename)."""
     kept = [p for p in history.posts if p.posted_at >= now - RETENTION]
-    body = History(posts=kept).model_dump_json(indent=2) + "\n"
-    path.parent.mkdir(parents=True, exist_ok=True)
-    fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=f".{path.name}.", suffix=".tmp")
-    try:
-        with os.fdopen(fd, "w", encoding="utf-8") as f:
-            f.write(body)
-        os.replace(tmp, path)
-    except BaseException:
-        Path(tmp).unlink(missing_ok=True)
-        raise
+    write_text_atomic(path, History(posts=kept).model_dump_json(indent=2) + "\n")
 
 
 def posted_ids(history: History) -> set[str]:

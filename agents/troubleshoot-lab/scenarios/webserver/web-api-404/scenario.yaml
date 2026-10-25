@@ -1,0 +1,23 @@
+id: web-api-404
+curriculum_no: extra-1
+fields:
+- webserver
+- network
+env: compose
+title: API 주소가 404를 돌려줘요
+difficulty: beginner
+minutes: 40
+symptom: localhost:8080/api/items 가 404 Not Found 를 돌려줘요. localhost:8080/healthz 는 정상이에요.
+tags:
+- nginx
+- location
+- typo
+warmups:
+- curl-basics
+- http-headers
+start_hint: curl -i localhost:8080/api/items
+measure:
+  path: /api/items
+  service: nginx
+interview:
+- 404가 애플리케이션에서 왔는지 프록시에서 왔는지 어떻게 구분하나요?

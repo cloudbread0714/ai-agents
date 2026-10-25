@@ -1,0 +1,5 @@
+{"metrics": {
+  "http_reqs": {"type": "counter", "values": {"count": 100, "rate": 5.0}},
+  "http_req_failed": {"type": "rate", "values": {"rate": 1.0, "passes": 100, "fails": 0}},
+  "http_req_duration": {"type": "trend", "values": {"avg": 2.0, "p(95)": 3.0, "max": 4.0}}
+}}

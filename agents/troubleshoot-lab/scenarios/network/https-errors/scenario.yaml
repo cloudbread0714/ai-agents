@@ -1,0 +1,25 @@
+id: https-errors
+curriculum_no: '17'
+fields:
+- network
+- webserver
+env: compose
+title: HTTPS로 접속하면 인증서 오류가 나요
+difficulty: intermediate
+minutes: 40
+symptom: https://localhost:8443 으로 접속하면 인증서 오류로 연결이 끊겨요. http://localhost:8080 은 정상이에요.
+tags:
+- tls
+- certificate
+- san
+- hostname-mismatch
+warmups:
+- tls-inspect
+- curl-basics
+start_hint: curl -v --cacert agents/troubleshoot-lab/.lab-state/work/nginx/certs/ca.pem https://localhost:8443/healthz
+measure:
+  path: /healthz
+  scheme: https
+  service: nginx
+interview:
+- HTTPS 인증서 오류가 나면 무엇을 확인하나요?

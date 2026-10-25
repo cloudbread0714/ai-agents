@@ -1,0 +1,43 @@
+id: socket-check
+env: compose
+kind: warmup
+title: 포트가 열려 있는지 확인하기
+minutes: 20
+goals:
+- ss -lntp 로 프로세스가 듣고 있는 주소와 포트를 본다
+- nc -vz 로 다른 서비스의 포트에 연결해 본다
+- 연결 성공과 거부를 구분한다
+- ss -s, ip addr, ip route 로 소켓 요약과 주소·경로를 본다
+steps:
+- id: listen
+  guide: |
+    Mac 호스트에는 이 리눅스 명령이 없거나 다르게 동작해요. `lab exec <서비스> -- <명령>` 은 진단 도구 컨테이너를 그 서비스의 네트워크·프로세스 공간에 붙여 실행해요(Claude Code에서는 `/lab-exec <서비스> <명령>`).
+    `ss -lntp` 는 듣고 있는(-l) TCP(-t) 소켓을 숫자로(-n), 프로세스와 함께(-p) 보여 줘요.
+    `Local Address:Port` 열이 `0.0.0.0:포트` 면 모든 주소에서, `127.0.0.1:포트` 면 자기 자신에게서만 연결을 받아요.
+  command: agents/troubleshoot-lab/bin/lab exec api -- ss -lntp
+  check: answer
+  prompt: uvicorn 이 듣고 있는 포트 번호를 입력하세요
+- id: reach
+  guide: '`nc -vz <호스트> <포트>` 는 데이터 없이 연결만 시도해요(-z). api 공간에서 redis 6379 로 연결해 보세요.'
+  command: agents/troubleshoot-lab/bin/lab exec api -- nc -vz -w 2 redis 6379
+  check: answer
+  prompt: succeeded 와 refused 중 어느 단어가 나왔나요?
+- id: closed
+  guide: 이번에는 아무도 듣지 않는 포트(6380)예요. 상대 호스트는 살아 있지만 그 포트에 프로세스가 없으면 '연결 거부'가 돼요.
+  command: agents/troubleshoot-lab/bin/lab exec api -- 'nc -vz -w 2 redis 6380; echo "exit=$?"'
+  check: answer
+  prompt: succeeded 와 refused 중 어느 단어가 나왔나요?
+- id: summary
+  guide: |
+    `ss -s` 는 소켓 수를 상태별로 요약해요. `TCP:` 줄 괄호 안에 연결 상태별 개수가 나와요.
+    연결이 갑자기 늘거나 특정 상태가 쌓이는지 빠르게 볼 때 써요.
+  command: agents/troubleshoot-lab/bin/lab exec api -- ss -s
+  check: answer
+  prompt: 'TCP: 줄 괄호 안의 첫 단어(상태 이름)를 입력하세요'
+- id: route
+  guide: |
+    `ip addr` 은 이 공간의 네트워크 인터페이스와 IP를, `ip route` 는 패킷을 어디로 보낼지(경로)를 보여 줘요.
+    `default via <주소>` 는 목적지를 모를 때 보내는 게이트웨이예요. 다른 네트워크로 나가는 길이 막히면 여기부터 봐요.
+  command: agents/troubleshoot-lab/bin/lab exec api -- 'ip addr show eth0; ip route'
+  check: answer
+  prompt: default via 뒤의 게이트웨이 주소를 입력하세요

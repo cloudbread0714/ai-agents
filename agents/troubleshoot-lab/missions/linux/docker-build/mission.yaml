@@ -1,0 +1,25 @@
+id: docker-build
+env: compose
+kind: warmup
+title: 이미지 빌드하기
+minutes: 15
+goals:
+- Dockerfile과 빌드 컨텍스트가 무엇인지 안다
+- docker build -t 로 이름 붙은 이미지를 만든다
+- 만든 이미지로 컨테이너를 실행한다
+steps:
+- id: build
+  guide: |
+    `docker build` 는 빌드 컨텍스트(Dockerfile이 있는 디렉터리)를 읽어 이미지를 만듭니다. `-t 이름:태그` 로 이미지에 이름을 붙여요.
+    이 미션용 Dockerfile은 `agents/troubleshoot-lab/.lab-state/missions/docker-build/context/` 에 준비돼 있어요. 내용을 먼저 읽고 빌드해 보세요.
+  command: |
+    cat agents/troubleshoot-lab/.lab-state/missions/docker-build/context/Dockerfile
+    docker build -t lab-hello:practice agents/troubleshoot-lab/.lab-state/missions/docker-build/context
+  check: state
+- id: run
+  guide: |
+    빌드한 이미지로 컨테이너를 실행합니다. `--rm` 을 붙이면 끝난 컨테이너가 자동으로 지워져요.
+    이 이미지는 빌드할 때마다 새 확인 코드를 만들어 두기 때문에, 직접 실행해야 코드를 알 수 있어요.
+  command: docker run --rm lab-hello:practice
+  check: answer
+  prompt: 출력된 확인 코드(lab- 뒤의 값)를 입력하세요

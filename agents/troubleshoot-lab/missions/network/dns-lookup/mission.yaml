@@ -1,0 +1,40 @@
+id: dns-lookup
+env: compose
+kind: warmup
+title: 서비스 이름이 IP로 바뀌는 과정
+minutes: 20
+goals:
+- 컨테이너 안에서 dig 로 서비스 이름을 조회한다
+- nslookup 으로 같은 질문을 다른 도구로 해 본다
+- resolv.conf 로 어떤 DNS 서버를 쓰는지 안다
+- 이름이 없을 때 DNS 응답 상태를 읽는다
+steps:
+- id: lookup
+  guide: |
+    Mac 호스트에는 이 리눅스 명령이 없거나 다르게 동작해요. `lab exec <서비스> -- <명령>` 은 진단 도구 컨테이너를 그 서비스의 네트워크·프로세스 공간에 붙여 실행해요(Claude Code에서는 `/lab-exec <서비스> <명령>`).
+    compose 의 컨테이너들은 서로를 서비스 이름(redis, postgres…)으로 불러요. 이 이름을 IP로 바꿔 주는 게 DNS예요.
+    `dig +short <이름>` 은 답(IP)만 짧게 보여 줘요.
+  command: agents/troubleshoot-lab/bin/lab exec api -- dig +short redis
+  check: answer
+  prompt: redis 의 IP 주소를 입력하세요
+- id: nslookup
+  guide: |
+    `nslookup <이름>` 도 같은 질문을 해요. 첫 두 줄(Server, Address)은 물어본 DNS 서버이고, 그 아래 `Name:` 다음 `Address:` 가 답이에요.
+    서버마다 설치된 도구가 달라서 둘 다 읽을 줄 알면 좋아요.
+  command: agents/troubleshoot-lab/bin/lab exec api -- nslookup postgres
+  check: answer
+  prompt: postgres 의 IP 주소를 입력하세요
+- id: resolver
+  guide: |
+    컨테이너가 어느 DNS 서버에 묻는지는 `/etc/resolv.conf` 의 `nameserver` 줄에 있어요.
+    Docker 네트워크 안에서는 Docker 가 내장 DNS 서버를 제공해요.
+  command: agents/troubleshoot-lab/bin/lab exec api -- cat /etc/resolv.conf
+  check: answer
+  prompt: nameserver 주소를 입력하세요
+- id: missing
+  guide: |
+    없는 이름을 물으면 DNS 서버는 답 대신 상태 코드를 돌려줘요. `dig` 출력의 `->>HEADER<<-` 줄에서 `status:` 값을 찾아보세요.
+    NOERROR(정상), NXDOMAIN(그런 이름 없음), SERVFAIL(서버가 답을 못 함)을 구분할 수 있으면 'DNS 오류'를 정확히 말할 수 있어요.
+  command: agents/troubleshoot-lab/bin/lab exec api -- dig no-such-service.invalid
+  check: answer
+  prompt: 'status: 뒤의 값을 입력하세요'

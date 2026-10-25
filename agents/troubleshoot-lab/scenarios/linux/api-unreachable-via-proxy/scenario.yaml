@@ -1,0 +1,25 @@
+id: api-unreachable-via-proxy
+curriculum_no: '1'
+fields:
+- linux
+- network
+env: compose
+title: API 주소로만 502가 나요
+difficulty: beginner
+minutes: 40
+symptom: localhost:8080/api/items 가 502 Bad Gateway 를 돌려줘요. api 컨테이너는 Up 상태이고 로그에도 오류가 없어요.
+tags:
+- bind-address
+- listen
+- loopback
+- command
+warmups:
+- socket-check
+- process-check
+start_hint: curl -i localhost:8080/api/items
+measure:
+  path: /api/items
+  service: api
+interview:
+- 서버는 정상인데 사용자가 웹사이트에 접속할 수 없다면 무엇부터 확인하나요?
+- ping이 실패하면 서버에 접속할 수 없는 건가요?

@@ -1,0 +1,33 @@
+id: curl-timing
+env: compose
+kind: warmup
+title: 응답 시간 단계별로 나눠 보기
+minutes: 15
+goals:
+- curl -w 로 DNS·연결·첫 바이트·전체 시간을 나눠 본다
+- 연결 거부(refused)와 시간 초과(timeout)를 종료 코드로 구분한다
+steps:
+- id: phases
+  guide: |
+    `-w` 로 curl이 잰 시간을 단계별로 뽑을 수 있어요. 각 값은 요청 시작부터 그 단계가 끝날 때까지 누적된 초예요.
+    - `time_namelookup`: 이름 → IP 변환(DNS)이 끝난 시점
+    - `time_connect`: TCP 연결이 맺어진 시점
+    - `time_starttransfer`: 서버가 첫 바이트를 보낸 시점(TTFB). connect 와의 차이가 곧 서버 처리 시간이에요
+    - `time_total`: 응답을 다 받은 시점
+  command: curl -s -o /dev/null -w 'dns=%{time_namelookup} connect=%{time_connect} ttfb=%{time_starttransfer} total=%{time_total}\n' localhost:8080/api/items
+  check: answer
+  prompt: 누적 시간이라 항상 가장 큰 값은 무엇인가요? (dns/connect/ttfb/total)
+- id: refused
+  guide: |
+    아무도 듣지 않는 포트에 연결하면 운영체제가 즉시 거부(RST)해요. curl은 이때 바로 종료 코드 7로 끝나요.
+    `; echo "exit=$?"` 로 직전 명령의 종료 코드를 볼 수 있어요.
+  command: curl -s -o /dev/null localhost:8098; echo "exit=$?"
+  check: answer
+  prompt: 출력된 종료 코드 숫자를 입력하세요
+- id: timeout
+  guide: |
+    포트 8099 에는 연결은 받지만 아무 응답도 하지 않는 프로그램이 떠 있어요(미션용 `lab-hang` 컨테이너).
+    이런 상대에게는 기다리다 `-m`(최대 시간)에 걸려 끝나요. 즉시 끝나는 refused 와 달리 몇 초가 걸리는 것도 확인해 보세요.
+  command: time curl -s -m 2 -o /dev/null localhost:8099; echo "exit=$?"
+  check: answer
+  prompt: 출력된 종료 코드 숫자를 입력하세요

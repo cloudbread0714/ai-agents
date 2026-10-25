@@ -1,0 +1,83 @@
+name: troubleshoot-lab
+
+on:
+  schedule:
+    - cron: "40 23 * * *" # 08:40 KST, off the top of the hour so the post lands around 09:00
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Slack channel to post to"
+        type: choice
+        options: [test, lab]
+        default: test
+      post:
+        description: "What to post (daily also posts the weekly summary on Sundays, KST)"
+        type: choice
+        options: [daily, weekly, both]
+        default: daily
+
+permissions:
+  contents: write # commit agents/troubleshoot-lab/data/posted.json
+
+concurrency:
+  group: troubleshoot-lab
+  cancel-in-progress: false
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install
+        id: install
+        run: uv sync --package troubleshoot-lab --frozen
+
+      - name: Post daily problem
+        id: post
+        env:
+          SLACK_WEBHOOK_LAB_URL: ${{ secrets.SLACK_WEBHOOK_LAB_URL }}
+          SLACK_WEBHOOK_URL_TEST: ${{ secrets.SLACK_WEBHOOK_URL_TEST }}
+        run: >-
+          agents/troubleshoot-lab/bin/lab daily
+          --target "${{ inputs.target || 'lab' }}"
+          --post "${{ inputs.post || 'daily' }}"
+
+      - name: Commit posting record
+        id: commit
+        if: always()
+        run: |
+          file=agents/troubleshoot-lab/data/posted.json
+          if git diff --quiet -- "$file"; then
+            echo "posting record unchanged"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$file"
+          git commit -m "chore(lab): update posting record [skip ci]"
+          for attempt in 1 2 3; do
+            git pull --rebase origin "${GITHUB_REF_NAME}" && git push origin "HEAD:${GITHUB_REF_NAME}" && exit 0
+            echo "push attempt ${attempt} failed; retrying"
+            sleep $((attempt * 5))
+          done
+          exit 1
+
+      # The CLI alerts on its own failures; this covers setup failures and a record push
+      # failure (which would let tomorrow's run repeat today's problem).
+      - name: Alert test channel
+        if: failure() && (steps.install.outcome == 'failure' || steps.commit.outcome == 'failure')
+        env:
+          SLACK_WEBHOOK_URL_TEST: ${{ secrets.SLACK_WEBHOOK_URL_TEST }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          KIND: "${{ steps.commit.outcome == 'failure' && 'WARNING: posting record not pushed' || 'workflow setup failed' }}"
+        run: |
+          payload=$(jq -n --arg t "⚠️ troubleshoot-lab ${KIND}" --arg u "$RUN_URL" \
+            '{text: ($t + " — <" + $u + "|GitHub Actions 실행 로그>")}')
+          curl --fail --silent --show-error --retry 3 --retry-all-errors --retry-delay 2 \
+            -H 'Content-Type: application/json' -d "$payload" "$SLACK_WEBHOOK_URL_TEST"

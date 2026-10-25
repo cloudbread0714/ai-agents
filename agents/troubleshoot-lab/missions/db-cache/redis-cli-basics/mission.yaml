@@ -1,0 +1,29 @@
+id: redis-cli-basics
+env: compose
+kind: warmup
+title: redis-cli 로 캐시 들여다보기
+minutes: 15
+goals:
+- GET/SET 과 TTL 로 키와 만료 시간을 다룬다
+- INFO stats 의 hits/misses 로 적중률을 계산할 수 있다
+steps:
+- id: get
+  guide: |
+    Mac 호스트에는 이 리눅스 명령이 없거나 다르게 동작해요. `lab exec <서비스> -- <명령>` 은 진단 도구 컨테이너를 그 서비스의 네트워크·프로세스 공간에 붙여 실행해요(Claude Code에서는 `/lab-exec <서비스> <명령>`).
+    Redis 는 키-값 저장소예요. 미션용 키 `lab:quiz` 를 만들어 뒀어요.
+  command: agents/troubleshoot-lab/bin/lab exec redis -- redis-cli GET lab:quiz
+  check: answer
+  prompt: 출력된 값을 입력하세요
+- id: ttl
+  guide: |
+    `TTL <키>` 는 남은 만료 시간(초)이에요. -1 은 만료 없음, -2 는 키가 없음이에요. `PTTL` 은 밀리초 단위예요.
+    `SET <키> <값> EX <초>` 로 만료 시간이 있는 키를 직접 만들어 보세요. 아래 명령을 실행한 뒤 `/lab-check ttl` 로 확인해요.
+  command: agents/troubleshoot-lab/bin/lab exec redis -- 'redis-cli SET lab:mine hello EX 300 && redis-cli TTL lab:mine'
+  check: state
+- id: stats
+  guide: |
+    `INFO stats` 의 `keyspace_hits` 는 GET 했을 때 키가 있었던 횟수, 그 옆 항목은 없었던 횟수예요.
+    적중률 = hits / (hits + 없었던 횟수) 예요.
+  command: agents/troubleshoot-lab/bin/lab exec redis -- 'redis-cli INFO stats | grep keyspace'
+  check: answer
+  prompt: 키가 없었던 횟수를 나타내는 항목 이름을 입력하세요

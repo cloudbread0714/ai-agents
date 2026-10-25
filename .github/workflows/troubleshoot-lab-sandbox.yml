@@ -1,0 +1,71 @@
+name: troubleshoot-lab-sandbox
+
+# Real docker compose + kind: every scenario's measure/inject/verify/reset cycle and every
+# mission's steps (research R13, SC-005). Only when practice content or the environment changes.
+on:
+  pull_request:
+    paths:
+      # environment/** covers toolbox/ and k6/ too
+      - "agents/troubleshoot-lab/environment/**"
+      - "agents/troubleshoot-lab/lib/**"
+      - "agents/troubleshoot-lab/missions/**"
+      - "agents/troubleshoot-lab/scenarios/**"
+      - "agents/troubleshoot-lab/curriculum/**"
+      - "agents/troubleshoot-lab/tests/sandbox/**"
+      - ".github/workflows/troubleshoot-lab-sandbox.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: troubleshoot-lab-sandbox-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sandbox:
+    # Four runners with their own environment each take every 4th test (~10 min instead of ~35).
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    name: sandbox (${{ matrix.shard }}/4)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      LAB_SANDBOX_SHARD: ${{ matrix.shard }}/4
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install kind
+        env:
+          KIND_VERSION: v0.27.0
+        run: |
+          curl -fsSLo kind "https://kind.sigs.k8s.io/dl/${KIND_VERSION}/kind-linux-amd64"
+          sudo install -m 0755 kind /usr/local/bin/kind
+
+      - name: Install
+        run: uv sync --package troubleshoot-lab --frozen
+
+      - name: Start practice environment
+        run: make -C agents/troubleshoot-lab up
+
+      # Repository variable LAB_SANDBOX_SELECT (pytest -k) narrows the run while fixing one
+      # scenario; leave it unset for the full check before merging.
+      - name: Sandbox tests
+        env:
+          LAB_SANDBOX_SKIP_UP: "1"
+          SELECT: ${{ vars.LAB_SANDBOX_SELECT }}
+        run: |
+          if [ -n "$SELECT" ]; then
+            echo "::warning::Partial sandbox run (LAB_SANDBOX_SELECT=$SELECT). Unset it for the full check."
+          fi
+          make -C agents/troubleshoot-lab test-sandbox
+
+      - name: Script logs on failure
+        if: failure()
+        run: tail -n 40 agents/troubleshoot-lab/.lab-state/logs/*.log || true

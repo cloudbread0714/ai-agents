@@ -1,0 +1,19 @@
+id: docker-logs
+env: compose
+kind: warmup
+title: 컨테이너 로그 보기
+minutes: 10
+goals:
+- docker logs 로 컨테이너 출력을 읽는다
+- stdout과 stderr가 모두 로그에 남는다는 것을 안다
+steps:
+- id: logs
+  guide: 컨테이너가 표준 출력(stdout)과 표준 오류(stderr)로 쓴 내용은 `docker logs` 로 볼 수 있어요. 미션용 컨테이너 `lab-logger` 가 1초마다 로그를 남기고 있어요.
+  command: docker logs lab-logger
+  check: answer
+  prompt: '[error] 줄의 request_id 값을 입력하세요'
+- id: stderr
+  guide: '`docker logs` 는 컨테이너의 stderr를 내 터미널의 stderr로 보내요. `2>&1 >/dev/null` 로 stderr만 남겨 보면 경고 줄만 보여요.'
+  command: docker logs lab-logger 2>&1 >/dev/null
+  check: answer
+  prompt: '[warn] 줄의 code 값을 입력하세요'

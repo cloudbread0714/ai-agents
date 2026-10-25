@@ -1,0 +1,33 @@
+id: tcp-states
+env: compose
+kind: warmup
+title: TCP 연결 상태 읽기
+minutes: 20
+goals:
+- ss -ant 로 연결 상태(State)를 읽는다
+- CLOSE-WAIT 소켓을 찾아 상대 주소를 확인한다
+- TIME-WAIT 와 CLOSE-WAIT 가 각각 어느 쪽에 남는지 안다
+steps:
+- id: listen
+  guide: |
+    Mac 호스트에는 이 리눅스 명령이 없거나 다르게 동작해요. `lab exec <서비스> -- <명령>` 은 진단 도구 컨테이너를 그 서비스의 네트워크·프로세스 공간에 붙여 실행해요(Claude Code에서는 `/lab-exec <서비스> <명령>`).
+    `ss -ant` 는 모든 TCP 소켓과 상태를 보여 줘요. 서버 소켓은 연결을 기다리는 상태, 맺어진 연결은 ESTAB(ESTABLISHED) 이에요.
+  command: agents/troubleshoot-lab/bin/lab exec api -- ss -ant
+  check: answer
+  prompt: uvicorn 의 8000 포트 소켓 상태 이름을 입력하세요
+- id: close-wait
+  guide: |
+    상대가 먼저 연결을 끊었는데(FIN) 내 프로그램이 아직 `close()` 하지 않으면 내 쪽 소켓은 CLOSE-WAIT 로 남아요.
+    이 상태는 시간이 지나도 사라지지 않아서, 계속 쌓이면 프로그램이 소켓을 닫지 않는 버그라는 신호예요.
+    미션용으로 api 네트워크 공간에 이런 소켓을 하나 만들어 뒀어요. `state` 필터로 그 상태만 골라 보세요.
+  command: agents/troubleshoot-lab/bin/lab exec api -- ss -ant state close-wait
+  check: answer
+  prompt: CLOSE-WAIT 소켓의 상대(Peer) 포트 번호를 입력하세요
+- id: time-wait
+  guide: |
+    반대로 연결을 **먼저 끊은 쪽**은 마지막 ACK 가 유실될 때를 대비해 잠시(리눅스 60초) 다른 상태로 남아요.
+    짧은 연결이 아주 많으면 이 상태가 수천 개 쌓일 수 있지만, 스스로 사라지는 정상 동작이에요.
+    요청을 몇 번 보낸 뒤 nginx 공간의 상태별 개수를 세어 보세요.
+  command: for i in 1 2 3 4 5; do curl -s -o /dev/null localhost:8080/api/items; done; agents/troubleshoot-lab/bin/lab exec nginx -- 'ss -ant | tail -n +2 | cut -d" " -f1 | sort | uniq -c'
+  check: answer
+  prompt: 먼저 끊은 쪽에 잠시 남는 상태 이름을 입력하세요

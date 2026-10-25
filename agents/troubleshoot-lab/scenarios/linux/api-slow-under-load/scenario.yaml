@@ -1,0 +1,26 @@
+id: api-slow-under-load
+curriculum_no: '7'
+fields:
+- linux
+- monitoring
+env: compose
+title: 사용자가 몰리면 리포트가 느려져요
+difficulty: intermediate
+minutes: 45
+symptom: localhost:8080/api/report 가 혼자 쓸 때는 견딜 만한데, 여러 명이 동시에 쓰면 몇 초씩 걸려요. 오류는 나지 않아요.
+tags:
+- cpu
+- algorithm
+- gil
+- naive-loop
+warmups:
+- process-check
+- k6-basics
+start_hint: curl -s -o /dev/null -w 'total=%{time_total}\n' localhost:8080/api/report
+measure:
+  path: /api/report
+  service: api
+  vus: 10
+interview:
+- 서버 CPU 사용률이 100%에 도달하면 어떻게 대응하나요?
+- Load Average와 CPU 사용률은 어떻게 다른가요?

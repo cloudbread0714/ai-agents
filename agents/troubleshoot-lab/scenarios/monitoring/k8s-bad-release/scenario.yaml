@@ -1,0 +1,24 @@
+id: k8s-bad-release
+curriculum_no: 18-B
+fields:
+- monitoring
+env: kind
+title: 새 버전 배포 후 요청이 실패해요
+difficulty: advanced
+minutes: 45
+symptom: 새 버전(2.0.0)을 배포한 뒤 localhost:8081/api/items 요청이 실패해요. 배포는 끝났고 Pod도 모두 Ready예요.
+tags:
+- readiness
+- shallow-healthcheck
+- rollout-undo
+- database-password
+warmups:
+- k8s-rollout
+- k8s-describe
+start_hint: 'curl -s localhost:8081/api/version; curl -i localhost:8081/api/items'
+measure:
+  path: /api/items
+  service: api
+interview:
+- 배포 직후 장애가 발생하면 어떻게 대응하나요?
+- readiness 검사는 무엇을 확인해야 하나요?

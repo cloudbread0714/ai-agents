@@ -1,0 +1,25 @@
+id: curl-basics
+env: compose
+kind: warmup
+title: curl 기본
+minutes: 15
+goals:
+- curl 로 HTTP 요청을 보내고 본문을 읽는다
+- 상태 코드만 뽑아 본다
+- -v 로 요청과 응답 과정을 본다
+steps:
+- id: body
+  guide: '`curl -s URL` 은 응답 본문을 출력해요(-s 는 진행 표시를 숨겨요).'
+  command: curl -s localhost:8080/quiz
+  check: answer
+  prompt: 본문의 code 값(lab- 뒤의 값)을 입력하세요
+- id: status
+  guide: 본문 대신 상태 코드만 보고 싶을 때는 `-o /dev/null -w '%{http_code}'` 를 써요. 없는 경로에 요청해 보세요.
+  command: curl -s -o /dev/null -w '%{http_code}\n' localhost:8080/no-such-page
+  check: answer
+  prompt: 출력된 상태 코드를 입력하세요
+- id: verbose
+  guide: '`-v` 는 curl이 보낸 요청(>로 시작)과 받은 응답 헤더(<로 시작)를 모두 보여 줘요. 문제를 추적할 때 가장 먼저 쓰는 옵션이에요.'
+  command: curl -sv localhost:8080/quiz 2>&1 | grep '^>'
+  check: answer
+  prompt: 요청 첫 줄의 HTTP 메서드를 입력하세요

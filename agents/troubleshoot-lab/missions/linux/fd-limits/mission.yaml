@@ -1,0 +1,29 @@
+id: fd-limits
+env: compose
+kind: warmup
+title: 열 수 있는 파일 수(fd) 한도
+minutes: 15
+goals:
+- 프로세스의 nofile 한도를 prlimit 로 읽는다
+- /proc/<pid>/fd 에서 열린 파일과 소켓을 본다
+- lsof 로 프로세스가 연 네트워크 연결을 본다
+steps:
+- id: limit
+  guide: |
+    Mac 호스트에는 이 리눅스 명령이 없거나 다르게 동작해요. `lab exec <서비스> -- <명령>` 은 진단 도구 컨테이너를 그 서비스의 네트워크·프로세스 공간에 붙여 실행해요(Claude Code에서는 `/lab-exec <서비스> <명령>`).
+    리눅스에서는 파일뿐 아니라 소켓도 '파일 디스크립터(fd)'예요. 프로세스마다 열 수 있는 fd 수에 한도(nofile)가 있고,
+    넘으면 `Too many open files` 오류가 나요. 진단 컨테이너는 api 와 PID 공간을 공유해서 PID 1 이 api 프로세스예요.
+    진단 쉘의 `ulimit -n` 은 진단 컨테이너 자신의 값이니, 남의 프로세스는 `prlimit --pid` 로 봐요.
+  command: agents/troubleshoot-lab/bin/lab exec api -- prlimit --pid 1 --nofile
+  check: answer
+  prompt: SOFT 값을 입력하세요
+- id: fds
+  guide: '`/proc/1/fd` 의 항목 하나하나가 열린 fd예요. `ls -l` 로 보면 무엇을 가리키는지 나와요.'
+  command: agents/troubleshoot-lab/bin/lab exec api -- 'ls -l /proc/1/fd | tail -n +2 | head -20'
+  check: answer
+  prompt: socket:[숫자] 처럼 보이는 항목은 무엇인가요? (file/socket/pipe)
+- id: lsof
+  guide: '`lsof -p <pid> -i` 는 그 프로세스가 연 네트워크 연결만 보여 줘요. fd 가 많이 쌓였을 때 어느 상대와의 연결인지 볼 수 있어요.'
+  command: agents/troubleshoot-lab/bin/lab exec api -- lsof -nP -p 1 -a -i TCP
+  check: answer
+  prompt: TYPE 열의 값을 입력하세요

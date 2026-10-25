@@ -1,0 +1,64 @@
+# Docker practice environment. Always run through `dc` (lib/common.sh), which adds
+# -p troubleshoot-lab and the work-copy override ($LAB_WORK/compose.override.yaml).
+name: troubleshoot-lab
+
+services:
+  nginx:
+    image: nginx:1.27-alpine
+    ports:
+      - "8080:80"
+      - "8443:443"
+    volumes:
+      - ${LAB_WORK:-../.lab-state/work}/nginx:/etc/nginx/conf.d:ro
+    depends_on:
+      - api
+    networks: [lab]
+
+  api:
+    image: lab-api:dev
+    build: ./api
+    environment:
+      DATABASE_URL: postgresql://lab:lab@postgres:5432/lab
+      REDIS_URL: redis://redis:6379/0
+      EXT_URL: http://ext:8000
+      LOG_DIR: /var/log/app
+      APP_VERSION: "1.0.0"
+    tmpfs:
+      - /var/log/app:size=32m
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      ext:
+        condition: service_started
+    networks: [lab]
+
+  ext:
+    image: lab-api:dev
+    environment:
+      APP_ROLE: ext
+    networks: [lab]
+
+  redis:
+    image: redis:7-alpine
+    networks: [lab]
+
+  postgres:
+    image: postgres:16-alpine
+    # Local-only practice credentials, not a secret (research R14).
+    environment:
+      POSTGRES_USER: lab
+      POSTGRES_PASSWORD: lab
+      POSTGRES_DB: lab
+    volumes:
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "lab"]
+      interval: 2s
+      retries: 60
+    networks: [lab]
+
+networks:
+  lab: {}

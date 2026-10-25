@@ -1,0 +1,25 @@
+id: errors-under-traffic
+curriculum_no: '11'
+fields:
+- linux
+- webserver
+env: compose
+title: 트래픽이 몰릴 때만 오류가 나요
+difficulty: intermediate
+minutes: 45
+symptom: localhost:8080/api/upstream 은 혼자 호출하면 항상 성공해요. 그런데 동시에 많이 호출하면 일부가 500이나 502로 실패해요.
+tags:
+- ulimit
+- nofile
+- too-many-open-files
+- concurrency
+warmups:
+- fd-limits
+- k6-basics
+start_hint: curl -s --parallel --parallel-immediate --parallel-max 40 -o /dev/null -w '%{http_code}\n' $(printf 'localhost:8080/api/upstream?%s ' $(seq 200)) | sort | uniq -c
+measure:
+  path: /api/upstream
+  service: api
+  vus: 40
+interview:
+- 갑자기 트래픽이 10배 증가하면 어떤 장애가 생길 수 있나요?

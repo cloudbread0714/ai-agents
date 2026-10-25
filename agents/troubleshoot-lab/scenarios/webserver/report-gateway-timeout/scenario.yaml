@@ -1,0 +1,24 @@
+id: report-gateway-timeout
+curriculum_no: '6'
+fields:
+- webserver
+- network
+env: compose
+title: 리포트 페이지만 504가 나요
+difficulty: intermediate
+minutes: 45
+symptom: localhost:8080/api/report 가 3초쯤 기다린 뒤 504 Gateway Timeout 을 돌려줘요. 다른 API는 정상이에요.
+tags:
+- upstream-delay
+- proxy-read-timeout
+- slow-endpoint
+warmups:
+- proxy-errors
+- curl-timing
+start_hint: curl -i -w 'total=%{time_total}\n' localhost:8080/api/report
+measure:
+  path: /api/report
+  service: api
+interview:
+- 502와 504는 어떻게 다른가요?
+- 타임아웃을 늘리는 것이 항상 올바른 해결책인가요?

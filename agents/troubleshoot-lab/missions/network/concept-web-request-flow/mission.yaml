@@ -1,0 +1,53 @@
+id: concept-web-request-flow
+env: compose
+kind: concept
+title: 웹사이트 접속 과정 따라가기
+minutes: 60
+goals:
+- 이름 해석 → TCP 연결 → HTTP 요청·응답 순서를 직접 관찰한다
+- 각 단계를 TCP/IP 4계층·OSI 7계층에 대응시킨다
+- 어느 단계에서 실패했는지에 따라 오류 이름이 달라짐을 안다
+steps:
+- id: dns
+  guide: |
+    Mac 호스트에는 이 리눅스 명령이 없거나 다르게 동작해요. `lab exec <서비스> -- <명령>` 은 진단 도구 컨테이너를 그 서비스의 네트워크·프로세스 공간에 붙여 실행해요(Claude Code에서는 `/lab-exec <서비스> <명령>`).
+    **읽기**: `docs/curriculum.md` 의 '① 네트워크' 절을 먼저 읽어요(20분).
+
+    브라우저에 주소를 치면 가장 먼저 이름을 IP 로 바꿔요(응용 계층의 DNS, 보통 UDP 53). 실습 환경 안에서 nginx 의 IP 를 찾아보세요.
+    여기서 실패하면 'DNS 오류(could not resolve host)'가 돼요.
+  command: agents/troubleshoot-lab/bin/lab exec api -- dig +short nginx
+  check: answer
+  prompt: nginx 의 IP 주소를 입력하세요
+- id: tcp
+  guide: |
+    IP 를 알면 TCP 3-way handshake(SYN → SYN/ACK → ACK)로 연결을 맺어요. 전송 계층(TCP, OSI 4)과 인터넷 계층(IP, OSI 3)의 일이에요.
+    여기서 실패하면 'Connection refused'(포트에 프로세스 없음) 또는 'Connection timed out'(패킷이 막히거나 버려짐)이 돼요.
+  command: curl -sv -o /dev/null localhost:8080/healthz 2>&1 | grep -i connected
+  check: answer
+  prompt: 연결된 포트 번호를 입력하세요
+- id: http
+  guide: |
+    연결 위로 HTTP 요청(`>` 줄)을 보내고 응답(`<` 줄)을 받아요. HTTPS 라면 이 사이에 TLS 핸드셰이크가 들어가요.
+    응답 첫 줄은 `HTTP/버전 상태코드 이유` 형식이에요.
+  command: curl -sv -o /dev/null localhost:8080/healthz 2>&1 | grep '^[<>]'
+  check: answer
+  prompt: '응답 첫 줄의 HTTP 버전을 입력하세요 (예: HTTP/2)'
+- id: ttfb
+  guide: 단계별 시간을 나눠 보면 어디서 느린지 알 수 있어요. connect 이후 첫 바이트(ttfb)까지는 서버가 요청을 처리하는 시간이에요.
+  command: curl -s -o /dev/null -w 'dns=%{time_namelookup} connect=%{time_connect} ttfb=%{time_starttransfer} total=%{time_total}\n' localhost:8080/api/report
+  check: answer
+  prompt: ttfb 에서 connect 를 뺀 시간은 무엇을 기다린 시간인가요? (dns/tcp/server)
+- id: proxy
+  guide: |
+    localhost:8080 에서 답한 것은 nginx 지만, 실제 처리는 그 뒤의 api 가 해요. nginx 가 새 TCP 연결로 api 에 요청을 전달하기 때문이에요.
+    nginx 공간에서 맺어진 연결을 보면 상대 포트가 보여요(요청을 몇 번 보낸 직후에 실행하세요).
+  command: for i in 1 2 3; do curl -s -o /dev/null localhost:8080/api/items; done; agents/troubleshoot-lab/bin/lab exec nginx -- ss -ant
+  check: answer
+  prompt: nginx 가 연결한 api 의 포트 번호를 입력하세요
+- id: layer
+  guide: |
+    정리: DNS·HTTP·TLS 는 응용(OSI 7, TLS 는 5~6 으로 보기도 해요), TCP 는 전송(4), IP 는 네트워크(3), 이더넷은 데이터 링크(2) 계층이에요.
+    아래 명령으로 응답 헤더를 한 번 더 보고 답하세요.
+  command: curl -sI localhost:8080/healthz
+  check: answer
+  prompt: HTTP 는 OSI 몇 계층인가요? (숫자만)
