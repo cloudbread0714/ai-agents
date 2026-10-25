@@ -1,1 +1,15 @@
-{"version": 1, "posts": []}
+{
+  "version": 1,
+  "posts": [
+    {
+      "article_id": "77282c79df25665f",
+      "url": "https://aws.amazon.com/blogs/aws/aws-continuum-for-code-vulnerabilities-is-now-generally-available",
+      "title": "AWS Continuum for code vulnerabilities is now generally available",
+      "title_ko": "AWS Continuum for code vulnerabilities, 코드 취약점을 찾아 수정 PR까지 자동 제안하는 서비스 정식 출시",
+      "category": "infra",
+      "source": "AWS News Blog",
+      "posted_at": "2026-10-25T00:30:25.763645Z",
+      "posted_date_kst": "2026-10-25"
+    }
+  ]
+}
