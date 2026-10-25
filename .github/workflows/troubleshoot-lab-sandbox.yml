@@ -46,10 +46,17 @@ jobs:
       - name: Start practice environment
         run: make -C agents/troubleshoot-lab up
 
+      # Repository variable LAB_SANDBOX_SELECT (pytest -k) narrows the run while fixing one
+      # scenario; leave it unset for the full check before merging.
       - name: Sandbox tests
         env:
           LAB_SANDBOX_SKIP_UP: "1"
-        run: make -C agents/troubleshoot-lab test-sandbox
+          SELECT: ${{ vars.LAB_SANDBOX_SELECT }}
+        run: |
+          if [ -n "$SELECT" ]; then
+            echo "::warning::Partial sandbox run (LAB_SANDBOX_SELECT=$SELECT). Unset it for the full check."
+          fi
+          make -C agents/troubleshoot-lab test-sandbox
 
       - name: Script logs on failure
         if: failure()

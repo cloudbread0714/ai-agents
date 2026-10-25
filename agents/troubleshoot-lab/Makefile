@@ -49,5 +49,6 @@ status:
 env:
 	@echo 'export KUBECONFIG=$(LAB_KUBECONFIG)'
 
+# SELECT=<pytest -k expression> runs only matching missions/scenarios, e.g. SELECT=popular-page-spikes
 test-sandbox:
-	cd ../.. && LAB_SANDBOX=1 uv run pytest -m sandbox agents/troubleshoot-lab/tests/sandbox
+	cd ../.. && LAB_SANDBOX=1 uv run pytest -m sandbox $(if $(SELECT),-k "$(SELECT)") agents/troubleshoot-lab/tests/sandbox
