@@ -68,3 +68,14 @@ def sandbox() -> Sandbox:
     if os.environ.get("LAB_SANDBOX_SKIP_UP") != "1":
         subprocess.run(["make", "-C", str(LAB_ROOT), "up"], check=True, timeout=1800)
     return Sandbox()
+
+
+def pytest_collection_modifyitems(config, items):
+    """LAB_SANDBOX_SHARD="i/n": keep every n-th test starting at i (CI runs n jobs in parallel)."""
+    shard = os.environ.get("LAB_SANDBOX_SHARD")
+    if not shard:
+        return
+    index, total = (int(x) for x in shard.split("/"))
+    keep = [item for n, item in enumerate(items) if n % total == index - 1]
+    config.hook.pytest_deselected(items=[item for item in items if item not in keep])
+    items[:] = keep

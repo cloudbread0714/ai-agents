@@ -24,8 +24,16 @@ concurrency:
 
 jobs:
   sandbox:
+    # Four runners with their own environment each take every 4th test (~10 min instead of ~35).
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    name: sandbox (${{ matrix.shard }}/4)
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    env:
+      LAB_SANDBOX_SHARD: ${{ matrix.shard }}/4
     steps:
       - uses: actions/checkout@v4
 
