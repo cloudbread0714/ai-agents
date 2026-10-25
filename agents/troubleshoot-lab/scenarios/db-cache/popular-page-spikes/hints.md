@@ -4,6 +4,7 @@ k6로 30명이 동시에 부를 때 응답 시간이 고르게 느린지, 몇 �
 
 ```
 docker compose logs --since 10s api | grep -c 'popular rebuild'
+docker compose exec -T postgres psql -U lab -d lab -c "SELECT seq_scan, idx_scan FROM pg_stat_user_tables WHERE relname = 'popular'"
 ```
 
 ## 힌트 2
