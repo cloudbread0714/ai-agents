@@ -297,7 +297,7 @@ Every scenario gets the following, and every mission gets `env`, `minutes`, `kin
 - [X] T046 [P] [US1] Create scenario no 11 `agents/troubleshoot-lab/scenarios/linux/errors-under-traffic/` (api `ulimits.nofile` lowered; pick the value in the sandbox so idle health checks pass and only the 40-VU measurement errors, starting at 128; measure with 40 VUs)
 - [X] T047 [P] [US1] Create scenario no 12 `agents/troubleshoot-lab/scenarios/db-cache/api-waits-for-db/` (`LEAK_DB_CONN=1 DB_POOL_SIZE=3`; hint 3 explains why raising max_connections is not the fix)
 - [X] T048 [P] [US1] Create scenario no 13 `agents/troubleshoot-lab/scenarios/db-cache/catalog-db-load/` (`CACHE_TTL_MS=1`)
-- [X] T049 [P] [US1] Create scenario no 14 `agents/troubleshoot-lab/scenarios/db-cache/popular-page-spikes/` (`CACHE_LOCK=0 CACHE_JITTER=0 POPULAR_TTL_MS=2000`, 30 VUs)
+- [X] T049 [P] [US1] Create scenario no 14 `agents/troubleshoot-lab/scenarios/db-cache/popular-page-spikes/` (`CACHE_LOCK=0 CACHE_JITTER=0 POPULAR_TTL_MS=300`; 2000 gave no measurable p95 change in the sandbox, 30 VUs)
 - [X] T050 [P] [US1] Create scenario no 17 `agents/troubleshoot-lab/scenarios/network/https-errors/` (nginx points at `wrong.pem`; measure scheme https)
 - [X] T051 [P] [US1] Create scenario no 19 `agents/troubleshoot-lab/scenarios/db-cache/orders-slow/` (drop `orders_customer_idx` via `tb` + psql; reset recreates postgres with a fresh volume)
 - [X] T052 [P] [US1] Create scenario no 20 `agents/troubleshoot-lab/scenarios/webserver/checkout-sometimes-times-out/` (ext `EXT_SLOW_RATIO=0.3 EXT_SLOW_MS=5000`, api `EXT_TIMEOUT_MS=0`)

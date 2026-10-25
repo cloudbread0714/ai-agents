@@ -341,7 +341,7 @@ Docker 없이 통과해야 하므로(헌법 III) 샌드박스 테스트는 따�
 | `/report` | 집계 계산 | `REPORT_ALGO=naive`(#7), `REPORT_DELAY_MS`(#6) |
 | `/upstream` | `ext` 서비스 호출 후 소켓 닫음 | `LEAK_SOCKETS=1`(#10) |
 | `/catalog/{id}` | Redis cache-aside, TTL `CACHE_TTL_MS`(기본 30s) | `CACHE_TTL_MS=1`(#13) |
-| `/popular` | 비싼 쿼리(`pg_sleep(0.3)`) 결과를 캐시. 재생성 락(`CACHE_LOCK=1`)과 TTL jitter 켜짐 | `CACHE_LOCK=0 CACHE_JITTER=0 POPULAR_TTL_MS=2000`(#14) |
+| `/popular` | 비싼 쿼리(`pg_sleep(0.3)`) 결과를 캐시. 재생성 락(`CACHE_LOCK=1`)과 TTL jitter 켜짐 | `CACHE_LOCK=0 CACHE_JITTER=0 POPULAR_TTL_MS=300`(#14, 2000은 SC-005 측정 차이가 나지 않아 개정) |
 | `/orders?customer=` | 20만 행 `orders` 테이블 조회(인덱스 있음) | 인덱스 삭제(#19, DB 측) |
 | `/checkout` | `ext` 서비스 호출, `EXT_TIMEOUT_MS`(기본 1000)와 대체 응답 | `EXT_TIMEOUT_MS=0` + ext 지연(#20) |
 | `/healthz`, `/counter`, `/profile`, `/version` | 기존과 같음 | — |

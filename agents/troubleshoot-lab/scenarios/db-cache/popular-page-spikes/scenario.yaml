@@ -7,7 +7,7 @@ env: compose
 title: 인기 페이지가 주기적으로 느려져요
 difficulty: advanced
 minutes: 50
-symptom: localhost:8080/api/popular 가 대부분 빠른데, 사용자가 많을 때 몇 초마다 한 번씩 모든 요청이 동시에 느려져요.
+symptom: localhost:8080/api/popular 가 대부분 빠른데, 사용자가 많을 때 1초 남짓한 간격으로 모든 요청이 한꺼번에 느려져요.
 tags:
 - cache-stampede
 - thundering-herd
