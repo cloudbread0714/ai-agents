@@ -16,4 +16,4 @@ docker compose logs --tail 30 api
 
 ## 힌트 3
 
-api 컨테이너의 `nofile` 한도가 128로 낮춰져 있어요(`ulimits`). 요청 하나가 nginx 연결, ext 연결, DB·Redis 연결을 함께 쓰기 때문에 동시 요청이 많으면 금방 닿아요. `docker compose config api` 로 확인하고 `agents/troubleshoot-lab/.lab-state/work/compose.override.yaml` 에서 `ulimits` 를 지운 뒤 `docker compose up -d api` 를 실행하세요.
+api 컨테이너의 `nofile` 한도가 64로 낮춰져 있어요(`ulimits`). 요청 하나가 nginx 연결, ext 연결, DB·Redis 연결을 함께 쓰기 때문에 동시 요청이 많으면 금방 닿아요. `docker compose config api` 로 확인하고 `agents/troubleshoot-lab/.lab-state/work/compose.override.yaml` 에서 `ulimits` 를 지운 뒤 `docker compose up -d api` 를 실행하세요.

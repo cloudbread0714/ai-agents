@@ -1,11 +1,11 @@
 ## 원인
 
-override가 api 컨테이너에 `ulimits.nofile: 128` 을 넣었어요. 리눅스에서는 소켓도 파일 디스크립터라, 동시 요청 40개가 nginx·ext·DB·Redis 연결을 함께 열면 한도를 넘었어요. 새 소켓을 만들지 못한 요청이 `Too many open files` 로 실패했어요.
+override가 api 컨테이너에 `ulimits.nofile: 64` 을 넣었어요. 리눅스에서는 소켓도 파일 디스크립터라, 동시 요청 40개가 nginx·ext·DB·Redis 연결을 함께 열면 한도를 넘었어요. 새 소켓을 만들지 못한 요청이 `Too many open files` 로 실패했어요.
 
 ## 해결
 
 1. 동시 요청을 보내 실패를 재현하고 `docker compose logs api` 에서 `Too many open files` 를 찾아요.
-2. `/lab-exec api prlimit --pid 1 --nofile` 로 한도가 128인 것을 확인해요.
+2. `/lab-exec api prlimit --pid 1 --nofile` 로 한도가 64인 것을 확인해요.
 3. `docker compose config api` 에서 `ulimits` 를 찾고 `agents/troubleshoot-lab/.lab-state/work/compose.override.yaml` 에서 지운 뒤 `docker compose up -d api`.
 
 ## 배운 점

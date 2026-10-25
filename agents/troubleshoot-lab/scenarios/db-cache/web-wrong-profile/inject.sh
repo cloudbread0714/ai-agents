@@ -15,7 +15,9 @@ location = /api/profile {
     add_header X-Cache-Status $upstream_cache_status always;
 }
 EOF
-wait_http localhost:8080/api/profile 200 30
-curl -s -o /dev/null --cookie user=alice localhost:8080/api/profile
+# Reload is graceful: old workers answer for a moment. Only alice's requests until the cached
+# location is live, so the first cached response is hers.
+live() { curl -s -o /dev/null -D - --max-time 3 --cookie user=alice localhost:8080/api/profile | grep -qiE '^x-cache-status: (miss|hit)'; }
+wait_until 30 live
 leaked() { curl -s --cookie user=bob localhost:8080/api/profile | grep -q alice; }
 wait_until 10 leaked

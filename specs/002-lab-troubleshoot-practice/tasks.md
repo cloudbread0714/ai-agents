@@ -420,7 +420,7 @@ Every scenario gets the following, and every mission gets `env`, `minutes`, `kin
 - [ ] T070 Run quickstart §2–§7 locally (needs Docker Desktop, kind, Slack webhooks); record results in this file's notes
   - 2026-10-24 메모: 이 머신은 Docker가 꺼져 있고 kind가 없어 아직 실행하지 못함. 정적 검사(`lab validate` 오류 0, `bash -n`),
     단위·통합·콘텐츠 테스트(744 passed, 샌드박스 53 skipped), 샘플 API 테스트(22 passed)만 확인.
-    #11 `nofile` 값(128)은 샌드박스에서 "평소 정상·40 VU에서만 오류"인지 확인 필요(research R18).
+    #11 `nofile`: CI 샌드박스에서 128은 40 동시 요청에도 오류가 나지 않아 64로 낮춤(평소 약 15개, 40 동시 약 90개 사용).
 - [ ] T071 After merge to main: quickstart §7 GitHub Actions part (register `SLACK_WEBHOOK_LAB_URL`, `workflow_dispatch target=test post=both`)
 
 ---
