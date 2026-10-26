@@ -10,6 +10,16 @@
       "source": "AWS News Blog",
       "posted_at": "2026-10-25T00:30:25.763645Z",
       "posted_date_kst": "2026-10-25"
+    },
+    {
+      "article_id": "8721ab67c6e85ade",
+      "url": "https://aws.amazon.com/about-aws/whats-new/2026/10/aws-transit-gateway-cloud-wan-1-1-nat",
+      "title": "AWS Transit Gateway and AWS Cloud WAN now support 1:1 NAT",
+      "title_ko": "AWS Transit Gateway와 Cloud WAN, 관리형 1:1 NAT 지원 시작",
+      "category": "infra",
+      "source": "AWS What's New",
+      "posted_at": "2026-10-26T00:42:21.809807Z",
+      "posted_date_kst": "2026-10-26"
     }
   ]
 }
