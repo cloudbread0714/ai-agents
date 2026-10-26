@@ -1,1 +1,15 @@
-{"version": 1, "daily": [], "weekly": []}
+{
+  "version": 2,
+  "daily": [
+    {
+      "date_kst": "2026-10-26",
+      "kind": "day",
+      "day": 1,
+      "main_kind": "mission",
+      "main_id": "concept-web-request-flow",
+      "second_id": null,
+      "posted_at": "2026-10-26T01:41:47.167747Z"
+    }
+  ],
+  "weekly": []
+}
