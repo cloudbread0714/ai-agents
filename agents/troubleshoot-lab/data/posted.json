@@ -9,6 +9,15 @@
       "main_id": "concept-web-request-flow",
       "second_id": null,
       "posted_at": "2026-10-26T01:41:47.167747Z"
+    },
+    {
+      "date_kst": "2026-10-27",
+      "kind": "day",
+      "day": 2,
+      "main_kind": "scenario",
+      "main_id": "site-connection-refused",
+      "second_id": null,
+      "posted_at": "2026-10-27T02:24:59.706461Z"
     }
   ],
   "weekly": []
