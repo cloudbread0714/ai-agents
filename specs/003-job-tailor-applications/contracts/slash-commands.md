@@ -50,12 +50,15 @@ CLI 호출 형식은 [cli.md](./cli.md)를 따른다.
 4. `resume.md`를 쓴다. 원본에 있는 사실만 고르고, 순서를 바꾸고, 표현을 다듬는다.
 5. `tailor.json`을 쓴다. 이력서 변경 목록과 포트폴리오 문구·순서 변경을 담고, 모든 항목에 `source`와 `reason`을 적는다.
 6. `job resume-pdf <folder>`를 실행한다.
-7. **렌더링 점검 루프**(최대 3회)를 돈다.
+7. **렌더링 점검 루프**(첫 적용 포함 최대 3회)를 돈다.
    - `job apply <folder>`를 실행한다.
    - `preview/`의 PNG를 모두 직접 열어 본다.
    - 자동 검출 문제가 있거나 눈으로 본 문제가 있으면 해당 문구를 **줄여서** 고치고 `tailor.json`을 수정한 뒤 다시 실행한다.
    - 3회째에도 남은 눈으로 본 문제는 `job note-issue`로 기록한다.
-8. `job verify <folder>`를 실행한다. 경고가 나오면 해당 문장을 고치거나(4·5단계로 돌아감), 근거가 있으면 이유를 남긴다.
+8. `job verify <folder>`를 실행한다. `unresolved` 경고마다 둘 중 하나를 한다.
+   - 해당 문장을 고친다(4·5단계로 돌아감).
+   - 실제로 원본에 근거가 있으면 `tailor.json`의 `acknowledged_warnings`에 원본 위치와 이유를 적는다.
+   - 근거 없이 해명으로 넘기지 않는다. `unresolved`가 남으면 `complete`가 exit 9로 멈춘다.
 9. `job complete <folder>`를 실행한다.
 10. 단계 2~8에서 계속할 수 없는 문제가 생기면 `job fail`로 기록하고 다음 공고로 넘어간다(FR-019).
 

@@ -14,7 +14,8 @@
 | `resume_mtime`, `portfolio_mtime` | 사람이 읽기 위한 참고값 |
 
 **규칙**:
-- 처리 시작과 끝의 해시가 같아야 한다(FR-007, SC-001). 다르면 그 공고는 `failed`가 되고, "원본이 처리 중에 바뀜"으로 보고한다.
+- `job` 명령 하나가 실행되는 동안 원본 해시가 바뀌면 안 된다(FR-007, SC-001). 바뀌면 그 명령은 exit 8로 끝나고, 해당 공고는 `failed`가 되며 "원본이 처리 중에 바뀜"으로 보고한다.
+- `init` 이후 단계는 `base/` 사본만 쓴다. 그래서 명령과 명령 사이에 원본을 바꾸는 것은 정상적인 새 버전(FR-009)이고, 진행 중인 폴더에는 영향이 없다.
 - 새 버전 판단은 따로 하지 않는다. 처리할 때마다 그 시점의 파일을 `base/`로 복사하므로 FR-009가 자연히 지켜진다.
 
 ## 2. PostingMessage (공고 메시지, Slack)
@@ -40,7 +41,7 @@ new / body_provided ──(중복이라 건너뜀: 기존 폴더 답글 + ✅)�
 ```
 
 - `/job-run` 대상은 `new`와 `body_provided`다. `awaiting_body`는 목록에 "본문 대기"로만 나온다(FR-018).
-- `[개수]` 제한은 `new`와 `body_provided`를 합쳐 오래된 순으로 적용한다.
+- `[개수]` 제한은 `new`와 `body_provided`를 합쳐 오래된 순으로 적용한다. 수집 중 가져오기에 실패한 공고(→ `awaiting_body`)를 대신할 공고를 더 채우지 않는다(FR-003).
 
 ## 3. Posting (공고)
 
@@ -125,6 +126,7 @@ summary: "백엔드 경험·Python은 일치, Kubernetes 운영 경험 부족"
 **규칙**:
 - `부족한 점`의 요건은 resume.md·portfolio에 나오면 안 된다(FR-012). `verify`가 키워드 단위로 확인한다(아래 7).
 - 점수 기준: 필수 요건 충족 비율 70%, 우대 사항 충족 비율 20%, 직무 연차·도메인 일치 10%. 근거 섹션에 계산을 적는다.
+- `fit_score < 40`이면 낮은 적합도다. 완료 보고(Slack 답글, `/tailor` 터미널 요약)에 "⚠️ 낮은 적합도"를 붙인다.
 
 ## 6. TailorPlan (tailor.json)
 
@@ -134,6 +136,7 @@ summary: "백엔드 경험·Python은 일치, Kubernetes 운영 경험 부족"
 - `portfolio.slide_order[]`: base 기준 슬라이드 번호(1부터)의 순열.
 - `portfolio.edits[]`: `{slide, shape_id, paragraph, text | runs[] | op: insert_after/delete, source, reason}`
 - `source`는 근거 위치다. 예: `resume.txt:L12-14`, `portfolio.json:s3/sh5/p0`. 빈 값은 허용하지 않는다.
+- `acknowledged_warnings[]`: `{file, token, source, reason}`. 근거 검사 경고 중 실제로는 근거가 있는 항목(동의어, 표기 차이 등)을 원본 위치와 함께 해명한다(아래 7).
 
 ## 7. ChangeLog (changes.md, 생성물)
 
@@ -146,12 +149,13 @@ summary: "백엔드 경험·Python은 일치, Kubernetes 운영 경험 부족"
 5. 렌더링 점검: 시도 횟수, 남은 문제(RenderIssue)
 6. 근거 검사 경고(아래 verify 결과)
 
-**근거 검사(`job verify`, 경고 수준)**: 원본 텍스트(`resume.txt` + `portfolio.json`)에 없는데 resume.md나 결과 PPTX에 새로 나온 다음 항목을 찾는다.
+**근거 검사(`job verify`)**: 원본 텍스트(`resume.txt` + `portfolio.json`)에 없는데 resume.md나 결과 PPTX에 새로 나온 다음 항목을 찾는다.
 - 숫자·퍼센트·연도
 - 영문 기술 토큰(대소문자 무시)
 - analysis.md `부족한 점`의 키워드
 
-찾은 것은 경고로 보여 준다. 세션은 경고를 고치거나, 근거가 있으면(동의어 등) 이유를 changes.md 경고 섹션에 남긴다.
+찾은 것은 경고로 보여 준다. 세션은 해당 문장을 고치거나, 근거가 있으면(동의어 등) `tailor.json`의 `acknowledged_warnings`에 원본 위치와 이유를 적는다.
+**해명되지 않은 경고가 하나라도 남으면 `complete`는 진행하지 않는다**(exit 9, 헌법 job 원칙). 해명한 항목은 changes.md 경고 섹션에 원본 위치와 이유와 함께 나온다.
 
 ## 8. RenderIssue
 

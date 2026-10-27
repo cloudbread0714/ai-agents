@@ -15,6 +15,21 @@
   },
   "properties": {
     "schema": { "const": 1 },
+    "acknowledged_warnings": {
+      "description": "verify 근거 검사 경고 중 실제 원본 근거가 있는 항목의 해명. 해명되지 않은 경고가 남으면 complete가 exit 9",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["file", "token", "source", "reason"],
+        "additionalProperties": false,
+        "properties": {
+          "file": { "enum": ["resume.md", "portfolio.pptx"] },
+          "token": { "type": "string", "minLength": 1 },
+          "source": { "$ref": "#/$defs/source" },
+          "reason": { "$ref": "#/$defs/reason" }
+        }
+      }
+    },
     "resume": {
       "type": "object",
       "required": ["changes"],

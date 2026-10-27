@@ -86,6 +86,7 @@
 - **Decision**: `resume.md` → HTML(`markdown` 3.7)로 바꾼 뒤, PyMuPDF `Story` API로 A4 PDF를 만든다.
   - 레포에 둔 간단한 CSS 템플릿(`templates/resume.css`)을 쓴다.
   - 한글 글꼴은 `config/job.yaml`의 `resume.font_files`(기본: Pretendard → Noto Sans KR → AppleSDGothicNeo 순으로 찾기)를 `fitz.Archive`로 넣는다.
+  - 후보가 하나도 없으면(예: Ubuntu CI) PyMuPDF 내장 CJK 글꼴(`fitz.Font("cjk")`)로 대신하고, `doctor`는 경고만 한다. 그래서 기본 테스트가 시스템 글꼴 없이 통과한다(헌법 III).
 - **Rationale**: R5와 같은 라이브러리라 시스템 의존성이 늘지 않는다.
   - 원본 resume.pdf의 디자인을 그대로 재현하는 것은 범위 밖이다. 스펙의 산출물도 resume.md 기반이다.
 - **Alternatives considered**:
@@ -115,6 +116,7 @@
   - 파일 올리기: `files.getUploadURLExternal` → 업로드 → `files.completeUploadExternal`. 예전 `files.upload`는 폐기됐다.
   - 필요 권한: `channels:history`(비공개 채널이면 `groups:history`), `reactions:read`, `reactions:write`, `chat:write`, `files:write`
   - 채널 ID는 비밀값이 아니라 설정이므로 `config/job.yaml`에 둔다.
+  - 연결 확인(`doctor`)은 `auth.test`와 `conversations.history`(limit=1) 호출로 한다. 이미 받은 권한 안에서 토큰과 채널 접근을 함께 확인할 수 있다.
 - **재시도**: `shared.retry`를 쓴다.
   - 429는 `Retry-After`를 존중한다.
   - `ok:false`이면서 `ratelimited`나 `internal_error`면 재시도한다.

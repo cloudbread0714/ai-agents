@@ -19,7 +19,8 @@ CLI는 결정적인 단계만 맡는다. 판단(추출·분석·작성)은 슬�
 | 5 | 환경 준비 안 됨(원본 없음, LibreOffice 없음, 토큰 없음, gitignore 미적용) |
 | 6 | 이미 처리한 공고(`init`, `--new` 없이) |
 | 7 | Slack 오류(재시도 소진) |
-| 8 | 처리 중 원본이 바뀜 |
+| 8 | 명령 실행 중 원본이 바뀜 |
+| 9 | 해명되지 않은 근거 검사 경고가 남아 있음(`complete`) |
 
 ## `job doctor`
 
@@ -27,9 +28,10 @@ CLI는 결정적인 단계만 맡는다. 판단(추출·분석·작성)은 슬�
 - 원본 두 파일이 있고 열린다(PDF 텍스트 추출 가능, PPTX 열림).
 - `soffice`가 있다.
 - PPTX가 쓰는 글꼴이 설치돼 있다(없는 글꼴은 경고만).
-- 이력서 글꼴 파일이 있다.
+- 이력서 글꼴 파일이 있다(없으면 경고만 하고 PyMuPDF 내장 CJK 글꼴을 쓴다).
 - `private/`, `applications/`, `.job-state/`가 git에서 무시된다.
-- `/job-run`용으로 `SLACK_BOT_TOKEN`과 채널 설정이 있다(없으면 경고만, `/tailor`는 가능).
+- `/job-run`용으로 `SLACK_BOT_TOKEN`과 채널 설정이 있고, `auth.test`와 `conversations.history`(limit=1) 호출이 성공한다.
+  실패하면 `slack_ready=false`이고 경고만 한다(`/tailor`는 가능).
 
 `JOB_RESULT {"ok": bool, "slack_ready": bool, "missing": [...], "warnings": [...]}`
 
@@ -107,14 +109,16 @@ JOB_RESULT {"items": [{"id": "1729990000.123456", "posted_at": "...", "url": "..
 ## `job verify <folder>`
 
 - 산출물이 모두 있는지 확인한다(FR-010). analysis.md frontmatter의 `fit_score`(0~100 정수)와 `summary`, 정해진 섹션 순서도 확인한다.
+- `job.md` 섹션(`## 요약`, `## 자격 요건`, `## 우대 사항`, `## 주요 업무`, `## 기타(근무지·형태·전형)`)이 있는지 확인한다. 완료 보고가 `## 요약`을 쓴다.
 - `base/` 사본 해시가 `meta.sources`와 같은지 확인한다.
-- 근거 검사 경고를 낸다([data-model §7](../data-model.md)). 경고가 있어도 exit 0이고, 경고는 `changes.md`에 다시 쓴다.
+- 근거 검사 경고를 낸다([data-model §7](../data-model.md)). `tailor.json`의 `acknowledged_warnings`로 해명된 것은 `acknowledged`, 나머지는 `unresolved`로 나눈다.
+  `verify` 자체는 exit 0이고, 결과를 `changes.md`에 다시 쓴다.
 
-`JOB_RESULT {"ok": true, "missing": [], "warnings": [{"file": "resume.md", "token": "Kafka", "kind": "tech"}]}`
+`JOB_RESULT {"ok": true, "missing": [], "unresolved": [{"file": "resume.md", "token": "Kafka", "kind": "tech"}], "acknowledged": []}`
 
 ## `job complete <folder>`
 
-`verify`를 먼저 다시 실행하고, 실패하면 중단한다.
+`verify`를 먼저 다시 실행한다. 산출물이 빠졌으면 exit 2, `unresolved` 경고가 남아 있으면 exit 9로 중단한다.
 - **origin=slack**: 다음 순서로 보고한다. 각 단계는 `meta.slack`에 기록하고, 다시 실행하면 빠진 단계부터 이어서 한다.
   1. 스레드 답글
   2. PDF 2개 올리기
@@ -124,7 +128,9 @@ JOB_RESULT {"items": [{"id": "1729990000.123456", "posted_at": "...", "url": "..
 
 `JOB_RESULT {"status": "done", "reply_ts": "...", "fit_score": 72, "remaining_issues": 0}`
 
-## `job skip <id> --reason (duplicate|expired) [--mark-done]`
+## `job skip <id> --reason (duplicate|expired) [--deadline YYYY-MM-DD] [--mark-done]`
+
+`--deadline`은 `expired --mark-done` 답글에 들어갈 마감일이다(세션이 추출한 값, 그때 필수).
 
 - `duplicate`(Slack 공고): 기존 폴더 위치를 스레드에 답글로 남기고 ✅를 단다(FR-016).
 - `expired`: 기본은 아무것도 하지 않는다(다음 실행 때 다시 나온다). `--mark-done`이면 "마감이 지나 처리하지 않음" 답글과 ✅를 남긴다.
