@@ -20,6 +20,16 @@
       "source": "AWS What's New",
       "posted_at": "2026-10-26T00:42:21.809807Z",
       "posted_date_kst": "2026-10-26"
+    },
+    {
+      "article_id": "4253eb49870be4f8",
+      "url": "https://aws.amazon.com/blogs/machine-learning/build-agentic-retrieval-on-a-managed-amazon-bedrock-knowledge-base-with-cdk",
+      "title": "Build agentic retrieval on a Managed Amazon Bedrock Knowledge Base with CDK",
+      "title_ko": "Managed Bedrock Knowledge Base와 CDK로 구현하는 에이전틱 검색 아키텍처",
+      "category": "ai_agent",
+      "source": "AWS Machine Learning Blog",
+      "posted_at": "2026-10-27T01:36:44.635821Z",
+      "posted_date_kst": "2026-10-27"
     }
   ]
 }
