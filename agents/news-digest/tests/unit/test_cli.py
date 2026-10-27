@@ -52,10 +52,11 @@ def test_missing_env_exits_2_and_prints_only_names(config_dir, capsys):
     assert "sk-ant-secret" not in err
 
 
-def test_dry_run_needs_only_anthropic_key(config_dir, mock_feeds, capsys):
+def test_dry_run_needs_only_anthropic_key(config_dir, mock_feeds, history_path, capsys):
     mock_feeds()
     llm = FakeAnthropic(responses=[FakeResponse(make_selection(article_id(EKS)))])
-    code = _main(["--config-dir", str(config_dir), "--dry-run"], {"ANTHROPIC_API_KEY": "k"}, llm)
+    environ = {"ANTHROPIC_API_KEY": "k", "NEWS_DIGEST_HISTORY_PATH": str(history_path)}
+    code = _main(["--config-dir", str(config_dir), "--dry-run"], environ, llm)
     assert code == 0
     out = capsys.readouterr().out.strip().splitlines()
     summary = json.loads(out[-1])
