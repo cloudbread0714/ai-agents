@@ -30,6 +30,16 @@
       "source": "AWS Machine Learning Blog",
       "posted_at": "2026-10-27T01:36:44.635821Z",
       "posted_date_kst": "2026-10-27"
+    },
+    {
+      "article_id": "ebfe71ec9852c66d",
+      "url": "https://tailscale.com/ssh-investigation-update",
+      "title": "Tailscale SSH: Investigation and remediation update",
+      "title_ko": "Tailscale SSH 조사 및 수정 현황 업데이트",
+      "category": "infra",
+      "source": "Hacker News",
+      "posted_at": "2026-10-28T01:39:36.331736Z",
+      "posted_date_kst": "2026-10-28"
     }
   ]
 }
