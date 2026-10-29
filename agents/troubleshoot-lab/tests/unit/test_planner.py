@@ -5,7 +5,7 @@ import pytest
 from tl_support import NOW, ev, make_catalog, progress_of, scenario_spec, write_plan
 from troubleshoot_lab.catalog import load_catalog
 from troubleshoot_lab.models import DailyPost, Posted, Progress
-from troubleshoot_lab.planner import backlog, plan_today
+from troubleshoot_lab.planner import plan_today
 
 TODAY = date(2026, 10, 26)
 IDS = ["s1", "s2", "s3", "s4", "s5"]
@@ -59,29 +59,22 @@ def test_next_day_after_last_day_post_with_second_item(cat):
     )
     pick = plan_today(cat, Progress(), p, TODAY)
     assert (pick.day, pick.main_id, pick.second_id) == (3, "s2", "s3")
-    assert pick.backlog == ["s1"]  # posted, unsolved
 
 
-def test_catchup_when_three_unsolved(cat):
+def test_no_catchup_even_with_three_unsolved(cat):
     p = posted(
         post(ago(3), day=2, main="s1"),
         post(ago(2), day=3, main="s2", second="s3"),
         post(ago(1), day=4, main="s4"),
     )
     pick = plan_today(cat, Progress(), p, TODAY)
-    assert pick.kind == "catchup" and pick.main_id == "s1"  # oldest backlog
-    assert pick.backlog == ["s2", "s3", "s4"]  # main excluded, at most 3 shown
+    assert (pick.kind, pick.day) == ("day", 5)
 
 
-def test_solved_and_gave_up_leave_the_backlog(cat):
-    p = posted(post(ago(3), day=2, main="s1"), post(ago(2), day=3, main="s2", second="s3"))
-    prog = progress_of(
-        ev("scenario_started", "s1", 0, attempt=1),
-        ev("scenario_solved", "s1", 1, attempt=1, hints_used=0),
-        ev("scenario_started", "s3", 2, attempt=1),
-        ev("scenario_gave_up", "s3", 3, attempt=1, hints_used=3),
-    )
-    assert backlog(cat, prog, p, TODAY) == ["s2"]
+def test_plan_day_advances_per_post_not_per_calendar_day(cat):
+    p = posted(post(TODAY - timedelta(days=30), day=2, main="s1"))
+    pick = plan_today(cat, Progress(), p, TODAY)
+    assert (pick.kind, pick.day, pick.main_id) == ("day", 3, "s2")
 
 
 def test_review_flag_when_main_already_solved(cat):

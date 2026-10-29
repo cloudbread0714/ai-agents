@@ -1,5 +1,7 @@
 # Contract: Slack 메시지
 
+> 004에서 변경: 오늘의 문제 게시·주간 요약 일부는 [`specs/004-lab-solve-gated-daily/contracts/slack-message.md`](../../004-lab-solve-gated-daily/contracts/slack-message.md)를 따른다.
+
 전송은 `shared.slack.send_webhook`으로 하고, 실패 알림은 `shared.alerts`를 쓴다.
 `test` 대상이면 헤더 앞에 `[TEST] `를 붙이고, mrkdwn 특수문자는 `shared.slack.escape_mrkdwn`으로 이스케이프한다.
 

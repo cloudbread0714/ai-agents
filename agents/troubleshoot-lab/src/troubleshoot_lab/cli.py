@@ -24,6 +24,7 @@ from troubleshoot_lab.guard import kubeconfig_path
 from troubleshoot_lab.learn import Learner, Outcome, default_guard
 from troubleshoot_lab.measure import Measurer
 from troubleshoot_lab.progress import ProgressStore
+from troubleshoot_lab.reactor import Reactor
 from troubleshoot_lab.runner import ScriptRunner
 from troubleshoot_lab.session import Session
 from troubleshoot_lab.sync import sync
@@ -108,6 +109,7 @@ def make_learner(lab_root: Path, environ: Mapping[str, str]) -> Learner:
         guard=guard,
         measurer=Measurer(lab_root, guard=guard),
         diagnoser=Diagnoser(lab_root, guard=guard),
+        reactor=Reactor(lab_root, environ),
         repo_root=lab_root.parents[1],
     )
 
@@ -209,9 +211,7 @@ def _daily(args, *, lab_root, environ, now, out, http_factory, base_delay) -> in
         print("error: --force/--today need --dry-run or --target test", file=sys.stderr)
         return 2
     names = (
-        []
-        if args.dry_run
-        else [daily.TEST_WEBHOOK] + ([daily.LAB_WEBHOOK] if target == "lab" else [])
+        [] if args.dry_run else [daily.TEST_WEBHOOK, *(daily.LAB_ENV if target == "lab" else ())]
     )
     try:
         env = {**environ, **require_env(*names, environ=environ)}

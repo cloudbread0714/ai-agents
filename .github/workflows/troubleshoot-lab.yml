@@ -41,7 +41,9 @@ jobs:
       - name: Post daily problem
         id: post
         env:
-          SLACK_WEBHOOK_LAB_URL: ${{ secrets.SLACK_WEBHOOK_LAB_URL }}
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_LAB_CHANNEL_ID: ${{ secrets.SLACK_LAB_CHANNEL_ID }}
+          SLACK_USER_ID: ${{ secrets.SLACK_USER_ID }}
           SLACK_WEBHOOK_URL_TEST: ${{ secrets.SLACK_WEBHOOK_URL_TEST }}
         run: >-
           agents/troubleshoot-lab/bin/lab daily

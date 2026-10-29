@@ -28,10 +28,10 @@ def load(path: Path) -> Posted:
 
 
 def save(path: Path, posted: Posted, *, now: datetime) -> None:
-    """Drop records older than a year, then write atomically."""
+    """Drop records older than a year (never the open problem), then write atomically."""
     cutoff = now - RETENTION
     kept = Posted(
-        daily=[d for d in posted.daily if d.posted_at >= cutoff],
+        daily=[d for d in posted.daily if d.posted_at >= cutoff or d.outcome == "open"],
         weekly=[w for w in posted.weekly if w.posted_at >= cutoff],
     )
     write_text_atomic(path, kept.model_dump_json(indent=2, exclude_none=False) + "\n")
@@ -39,6 +39,11 @@ def save(path: Path, posted: Posted, *, now: datetime) -> None:
 
 def posted_on(posted: Posted, day: date) -> DailyPost | None:
     return next((d for d in posted.daily if d.date_kst == day), None)
+
+
+def open_post(posted: Posted) -> DailyPost | None:
+    """The problem waiting for ✅ (at most one)."""
+    return next((d for d in posted.daily if d.outcome == "open"), None)
 
 
 def weekly_posted(posted: Posted, week_start: date) -> bool:
