@@ -12,6 +12,9 @@ mode=${1:-all}
 mkdir -p "$LAB_STATE"
 
 restore_compose() {
+  # nginx exits at start without its TLS material, which only `make up` generates.
+  [[ -f $LAB_STATE/certs/site.pem && -f $LAB_STATE/certs/site.key ]] ||
+    lab_die 5 "실습용 TLS 인증서가 없어요. make -C agents/troubleshoot-lab up 을 다시 실행하세요"
   work_reset
   # Standalone practice containers from missions are all named lab-*.
   local strays
