@@ -6,7 +6,7 @@
 |----------|------|------|
 | [news-digest](agents/news-digest/) | 매일 08:00 KST 무렵 기술 뉴스 1건을 골라 Slack에 한국어로 게시 | 구현 완료 |
 | [troubleshoot-lab](agents/troubleshoot-lab/) | 로컬 샌드박스(compose + kind)에서 6단계(측정 → 장애 재현 → 측정 → 진단 → 해결 → 보고서)로 트러블슈팅 실습, 21일 [커리큘럼](agents/troubleshoot-lab/docs/curriculum.md)에 맞춰 매일 08:40 KST 무렵 오늘의 주제 게시 | 구현 완료 |
-| job-apply | 이력서 기반 지원서 초안 작성 | 예정 |
+| [job-apply](agents/job-apply/) | Slack #job-apply 공고로 맞춤 이력서·포트폴리오 준비(제출은 직접) | 구현 완료 |
 
 ## 구조
 

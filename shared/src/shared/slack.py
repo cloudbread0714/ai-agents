@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json as _json
 import re
 import time
 from typing import Any
@@ -114,6 +115,7 @@ def _call(
     *,
     json: dict[str, Any] | None = None,
     params: dict[str, str] | None = None,
+    form: dict[str, str] | None = None,
     client: httpx.Client | None = None,
     max_attempts: int = 3,
     base_delay: float = 1.0,
@@ -132,7 +134,9 @@ def _call(
     )
     def _send() -> dict[str, Any]:
         try:
-            if json is None:
+            if form is not None:  # methods that do not accept JSON bodies
+                resp = http.post(API_BASE + method, data=form, headers=headers, timeout=timeout)
+            elif json is None:
                 resp = http.get(API_BASE + method, params=params, headers=headers, timeout=timeout)
             else:
                 resp = http.post(API_BASE + method, json=json, headers=headers, timeout=timeout)
@@ -215,3 +219,94 @@ def add_reaction(token: str, channel: str, ts: str, name: str, **kw: Any) -> boo
             return False
         raise
     return True
+
+
+def conversations_history(
+    token: str, channel: str, *, limit: int | None = None, page_size: int = 200, **kw: Any
+) -> list[dict[str, Any]]:
+    """Top-level messages, newest first, following ``next_cursor`` until ``limit`` (or all)."""
+    messages: list[dict[str, Any]] = []
+    cursor = ""
+    while True:
+        params = {"channel": channel, "limit": str(min(page_size, limit or page_size))}
+        if cursor:
+            params["cursor"] = cursor
+        resp = _call(token, "conversations.history", params=params, **kw)
+        messages += resp.get("messages", [])
+        cursor = (resp.get("response_metadata") or {}).get("next_cursor", "")
+        if not cursor or (limit is not None and len(messages) >= limit):
+            return messages[:limit] if limit is not None else messages
+
+
+def conversations_replies(token: str, channel: str, ts: str, **kw: Any) -> list[dict[str, Any]]:
+    """Replies in the thread of ``ts`` (the parent message excluded), oldest first."""
+    replies: list[dict[str, Any]] = []
+    cursor = ""
+    while True:
+        params = {"channel": channel, "ts": ts, "limit": "200"}
+        if cursor:
+            params["cursor"] = cursor
+        resp = _call(token, "conversations.replies", params=params, **kw)
+        replies += [m for m in resp.get("messages", []) if m.get("ts") != ts]
+        cursor = (resp.get("response_metadata") or {}).get("next_cursor", "")
+        if not cursor:
+            return replies
+
+
+def upload_files(
+    token: str,
+    channel: str,
+    files: list[tuple[str, bytes]],
+    *,
+    thread_ts: str | None = None,
+    client: httpx.Client | None = None,
+    base_delay: float = 1.0,
+    timeout: float = 30.0,
+) -> list[str]:
+    """Share ``(filename, content)`` pairs in one message: one upload URL per file, then a
+    single ``files.completeUploadExternal``. Returns the file IDs."""
+    http = client or httpx.Client()
+    kw: dict[str, Any] = {"client": http, "base_delay": base_delay}
+    try:
+        ids: list[dict[str, str]] = []
+        for name, content in files:
+            resp = _call(
+                token,
+                "files.getUploadURLExternal",
+                form={"filename": name, "length": str(len(content))},
+                **kw,
+            )
+            _upload(http, resp["upload_url"], name, content, base_delay, timeout)
+            ids.append({"id": str(resp["file_id"]), "title": name})
+        form = {"files": _json.dumps(ids), "channel_id": channel}
+        if thread_ts:
+            form["thread_ts"] = thread_ts
+        _call(token, "files.completeUploadExternal", form=form, **kw)
+        return [f["id"] for f in ids]
+    finally:
+        if client is None:
+            http.close()
+
+
+def _upload(
+    http: httpx.Client, url: str, name: str, content: bytes, base_delay: float, timeout: float
+) -> None:
+    """POST the bytes to a pre-signed upload URL (no token: the URL itself authorizes)."""
+    method = "files.upload_url"
+
+    @retryable(retry_on=(_RetryableApiError,), max_attempts=3, base_delay=base_delay, target=method)
+    def _send() -> None:
+        try:
+            resp = http.post(url, files={"file": (name, content)}, timeout=timeout)
+        except httpx.TransportError as exc:
+            raise _RetryableApiError(method, f"network error: {type(exc).__name__}") from None
+        if resp.status_code == 429 or resp.status_code >= 500:
+            raise _RetryableApiError(method, f"HTTP {resp.status_code}")
+        if not resp.is_success:
+            raise SlackApiError(method, f"HTTP {resp.status_code}")
+
+    try:
+        _send()
+    except _RetryableApiError as exc:
+        log.error("slack_api_failed", extra={"fields": {"method": method, "error": exc.code}})
+        raise SlackApiError(method, exc.code) from None

@@ -1,0 +1,25 @@
+# job-apply settings. No secrets here: SLACK_BOT_TOKEN comes from the environment.
+slack:
+  # #job-apply channel ID (not a secret). SLACK_JOB_CHANNEL_ID in the environment wins.
+  channel_id: ""
+
+resume:
+  # First existing file is embedded; none → PyMuPDF's built-in CJK font.
+  font_files:
+    - ~/Library/Fonts/Pretendard-Regular.otf
+    - /Library/Fonts/Pretendard-Regular.otf
+    - ~/Library/Fonts/NotoSansKR-Regular.otf
+    - /Library/Fonts/NotoSansKR-Regular.otf
+    - /usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc
+    - /System/Library/Fonts/AppleSDGothicNeo.ttc
+
+fetch:
+  timeout_s: 15
+  min_chars: 400
+  user_agent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15"
+
+render:
+  timeout_s: 120
+  max_attempts: 3
+  overflow_tolerance_pt: 4
+  preview_dpi: 150

@@ -18,7 +18,9 @@ build/
 .claude/settings.local.json
 
 # Personal data (constitution: job-apply)
-agents/job-apply/data/private/
+agents/job-apply/private/
+agents/job-apply/applications/
+agents/job-apply/.job-state/
 *.resume.*
 
 # OS / editor

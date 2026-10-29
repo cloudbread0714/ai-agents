@@ -16,6 +16,7 @@ from typing import Any
 _SECRET_PATTERNS = [
     (re.compile(r"(https://hooks\.slack\.com/services/)\S+"), r"\1***"),
     (re.compile(r"sk-ant-[A-Za-z0-9_\-]+"), "sk-ant-***"),
+    (re.compile(r"\b(xox[abpr])-[A-Za-z0-9-]+"), r"\1-***"),
 ]
 
 

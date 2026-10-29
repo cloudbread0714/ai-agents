@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "job-apply/tailor-plan/1",
+  "title": "TailorPlan (applications/<folder>/tailor.json)",
+  "type": "object",
+  "required": ["schema", "resume", "portfolio"],
+  "additionalProperties": false,
+  "$defs": {
+    "source": {
+      "description": "근거 위치. resume.txt:L<시작>[-<끝>] 또는 portfolio.json:s<슬라이드>/sh<shape_id>/p<문단>",
+      "type": "string",
+      "pattern": "^(resume\\.txt:L\\d+(-\\d+)?|portfolio\\.json:s\\d+/sh\\d+(/p\\d+)?)(, *(resume\\.txt:L\\d+(-\\d+)?|portfolio\\.json:s\\d+/sh\\d+(/p\\d+)?))*$"
+    },
+    "reason": { "type": "string", "minLength": 5 }
+  },
+  "properties": {
+    "schema": { "const": 1 },
+    "acknowledged_warnings": {
+      "description": "verify 근거 검사 경고 중 실제 원본 근거가 있는 항목의 해명. 해명되지 않은 경고가 남으면 complete가 exit 9",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["file", "token", "source", "reason"],
+        "additionalProperties": false,
+        "properties": {
+          "file": { "enum": ["resume.md", "portfolio.pptx"] },
+          "token": { "type": "string", "minLength": 1 },
+          "source": { "$ref": "#/$defs/source" },
+          "reason": { "$ref": "#/$defs/reason" }
+        }
+      }
+    },
+    "resume": {
+      "type": "object",
+      "required": ["changes"],
+      "additionalProperties": false,
+      "properties": {
+        "changes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["section", "after", "source", "reason"],
+            "additionalProperties": false,
+            "properties": {
+              "section": { "type": "string", "minLength": 1 },
+              "before": { "type": "string" },
+              "after": { "type": "string" },
+              "source": { "$ref": "#/$defs/source" },
+              "reason": { "$ref": "#/$defs/reason" }
+            }
+          }
+        }
+      }
+    },
+    "portfolio": {
+      "type": "object",
+      "required": ["slide_order", "edits"],
+      "additionalProperties": false,
+      "properties": {
+        "slide_order": {
+          "description": "base 기준 슬라이드 번호(1부터)의 순열. 길이는 slide_count와 같고 중복 없음(CLI가 검사)",
+          "type": "array",
+          "items": { "type": "integer", "minimum": 1 },
+          "minItems": 1
+        },
+        "order_reason": { "type": "string" },
+        "edits": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["slide", "shape_id", "paragraph", "source", "reason"],
+            "additionalProperties": false,
+            "description": "slide·paragraph는 base 기준. text / runs / op 중 정확히 하나(CLI가 검사)",
+            "properties": {
+              "slide": { "type": "integer", "minimum": 1 },
+              "shape_id": { "type": "integer", "minimum": 0 },
+              "paragraph": { "type": "integer", "minimum": 0 },
+              "text": { "type": "string" },
+              "runs": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+              "op": {
+                "type": "object",
+                "required": ["kind"],
+                "additionalProperties": false,
+                "properties": {
+                  "kind": { "enum": ["insert_after", "delete"] },
+                  "text": { "type": "string", "description": "insert_after일 때 새 문단 텍스트" }
+                }
+              },
+              "source": { "$ref": "#/$defs/source" },
+              "reason": { "$ref": "#/$defs/reason" }
+            }
+          }
+        }
+      }
+    }
+  }
+}
