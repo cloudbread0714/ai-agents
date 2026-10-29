@@ -7,7 +7,7 @@ same pick. No LLM is involved.
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import date
 from typing import Literal
 
@@ -16,10 +16,8 @@ from troubleshoot_lab import progress as prog
 from troubleshoot_lab.catalog import Catalog
 from troubleshoot_lab.models import PlanDay, Posted, Progress
 
-CATCHUP_AT = 3
-BACKLOG_SHOWN = 3
-
-PickKind = Literal["day", "catchup", "extra", "review"]
+# "catchup" only appears in records from before solve-gated posting (004).
+PickKind = Literal["day", "extra", "review"]
 
 
 @dataclass(frozen=True)
@@ -30,24 +28,10 @@ class DayPick:
     day: int | None = None
     plan_day: PlanDay | None = None
     second_id: str | None = None
-    backlog: list[str] = field(default_factory=list)
     review_flag: bool = False
     minutes: int = 0
     extra_index: int | None = None
     composite: bool = False
-
-
-def backlog(catalog: Catalog, progress: Progress, posted: Posted, today: date) -> list[str]:
-    """Scenarios posted before today (main or second) that are neither solved nor given up."""
-    seen: dict[str, date] = {}
-    for post in posted_mod.before(posted, today):
-        for sid in posted_mod.scenario_ids(post):
-            if sid in catalog.scenarios:
-                seen[sid] = post.date_kst  # last posting date
-    open_ = [
-        sid for sid in seen if prog.scenario_status(progress, sid) not in ("solved", "gave_up")
-    ]
-    return sorted(open_, key=lambda sid: (seen[sid], sid))
 
 
 def _no_key(no: str) -> tuple[int, str]:
@@ -117,39 +101,36 @@ def plan_today(catalog: Catalog, progress: Progress, posted: Posted, today: date
         return None
     previous = posted_mod.previous_daily(posted, today)
     prev_main = previous.main_id if previous else None
-    open_backlog = backlog(catalog, progress, posted, today)
     second = plan_day = day = extra_index = None
     composite = False
 
-    if len(open_backlog) >= CATCHUP_AT:
-        kind: PickKind = "catchup"
-        main = _avoid(prev_main, open_backlog)[0]
-    else:
-        next_day = posted_mod.last_day(posted, today) + 1
-        if next_day <= 21:
-            kind, day = "day", next_day
-            plan_day = plan.get(next_day)
-            if plan_day.pool is not None:
-                composite = True
-                main = choose_from_pool(catalog, progress, posted, plan_day.pool, today, prev_main)
-            else:
-                main = plan_day.items[0]
-                second = plan_day.items[1] if len(plan_day.items) > 1 else None
+    # A new item is only posted once the previous one is solved, so the plan day advances
+    # per solved problem, not per calendar day (004 FR-004).
+    next_day = posted_mod.last_day(posted, today) + 1
+    if next_day <= 21:
+        kind: PickKind = "day"
+        day = next_day
+        plan_day = plan.get(next_day)
+        if plan_day.pool is not None:
+            composite = True
+            main = choose_from_pool(catalog, progress, posted, plan_day.pool, today, prev_main)
         else:
-            mains = posted_mod.posted_mains(posted)
-            remaining = [e for e in plan.extras if e not in mains]
-            if remaining:
-                kind, main = "extra", remaining[0]
-                extra_index = plan.extras.index(main) + 1
-            else:
-                kind = "review"
-                main = _review(catalog, progress, prev_main)
-                if main is None:
-                    return None
+            main = plan_day.items[0]
+            second = plan_day.items[1] if len(plan_day.items) > 1 else None
+    else:
+        mains = posted_mod.posted_mains(posted)
+        remaining = [e for e in plan.extras if e not in mains]
+        if remaining:
+            kind, main = "extra", remaining[0]
+            extra_index = plan.extras.index(main) + 1
+        else:
+            kind = "review"
+            main = _review(catalog, progress, prev_main)
+            if main is None:
+                return None
 
     is_scenario = main in catalog.scenarios
     review_flag = is_scenario and kind == "day" and prog.scenario_status(progress, main) == "solved"
-    shown = [b for b in open_backlog if b not in (main, second)][:BACKLOG_SHOWN]
     return DayPick(
         kind=kind,
         main_id=main,
@@ -157,7 +138,6 @@ def plan_today(catalog: Catalog, progress: Progress, posted: Posted, today: date
         day=day,
         plan_day=plan_day,
         second_id=second,
-        backlog=shown,
         review_flag=review_flag,
         minutes=catalog.minutes_with_warmups(main, prog.done_missions(progress)),
         extra_index=extra_index,

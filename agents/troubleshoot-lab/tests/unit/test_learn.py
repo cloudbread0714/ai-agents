@@ -267,3 +267,58 @@ def test_list_shows_fields_stage_and_pending_reports(learner):
     assert "📝 보고서 대기: w-easy(시도 1)" in learner.list().text
     for sid in ("d-easy", "w-easy", "d-mid"):
         assert tag_sentinel(sid) not in text and hint_sentinel(sid, 1) not in text
+
+
+class _FakeReactor:
+    def __init__(self, status="added", message="Slack 오늘의 문제에 ✅를 달았어요."):
+        self.calls: list[str] = []
+        self.status, self.message = status, message
+
+    def after_done(self, item_id, progress, catalog):
+        from troubleshoot_lab.reactor import ReactionResult
+
+        self.calls.append(item_id)
+        return ReactionResult(self.status, self.message)
+
+
+def test_solve_marks_slack_and_reports_it(learner, store):
+    learner.reactor = _FakeReactor()
+    _ready(learner)
+    out = learner.check()
+    assert out.outcome == "solved" and out.exit_code == 0 and out.sync_suggested
+    assert learner.reactor.calls == ["m-one", "w-easy"]  # warmup completion, then the solve
+    assert out.text.rstrip().endswith("Slack 오늘의 문제에 ✅를 달았어요.")
+    assert out.result()["slack_reaction"] == "added"
+
+
+def test_mission_completion_marks_slack(learner):
+    learner.reactor = _FakeReactor(status="partial", message="남은 항목이 있어요")
+    learner.start("m-one")
+    learner.check()
+    out = learner.check("tok")
+    assert out.outcome == "mission_completed" and out.result()["slack_reaction"] == "partial"
+    assert out.text.rstrip().endswith("남은 항목이 있어요")
+
+
+def test_reaction_failure_changes_nothing_else(learner, store):
+    learner.reactor = _FakeReactor(status="failed", message="✅ 자동 반응을 달지 못했어요")
+    _ready(learner)
+    out = learner.check()
+    assert (out.outcome, out.exit_code, out.sync_suggested) == ("solved", 0, True)
+    assert store.load().events[-2].type == "scenario_solved"
+
+
+def test_failed_check_and_giveup_do_not_touch_slack(learner, runner):
+    learner.reactor = _FakeReactor()
+    _ready(learner)
+    learner.reactor.calls.clear()
+    runner.set("w-easy", "verify.sh", 1)
+    failed = learner.check()
+    assert failed.outcome == "failed" and "slack_reaction" not in failed.result()
+    learner.giveup()
+    assert learner.reactor.calls == []
+
+
+def test_without_reactor_result_has_no_slack_field(learner):
+    _ready(learner)
+    assert "slack_reaction" not in learner.check().result()

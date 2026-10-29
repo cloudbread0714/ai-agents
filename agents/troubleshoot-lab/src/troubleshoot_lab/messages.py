@@ -2,7 +2,8 @@
 
 The daily message uses only public fields (title, difficulty, field, curriculum number,
 symptom, plan topic/practice, warmup titles). Hints, solutions, tags, ``start_hint``,
-interview questions and measurement specs never reach Slack (FR-031, SC-002).
+interview questions and measurement specs never reach the daily message (FR-031, SC-002).
+The one exception is the 3-day reminder, which carries hint 1 on purpose (004 FR-011).
 """
 
 from __future__ import annotations
@@ -20,6 +21,11 @@ from troubleshoot_lab.weekly import KST, WeeklySummary
 WEEKDAYS = "월화수목금토일"
 CLI = "agents/troubleshoot-lab/bin/lab"
 STEPS = "정상 상태 측정 → 장애 재현 → 관찰 → 분석 → 해결 → 보고서"
+GATE_NOTE = (
+    "다 풀면 이 메시지에 ✅를 달아 주세요. /lab-check로 해결하면 자동으로 달려요. "
+    "✅가 있어야 다음 문제가 올라와요."
+)
+REPOSTED_NOTE = "이전 메시지를 찾을 수 없어 같은 문제를 다시 올려요."
 
 
 def _header(text: str, test_mode: bool) -> tuple[str, dict[str, Any]]:
@@ -39,8 +45,6 @@ def _heading(pick: DayPick, catalog: Catalog) -> str:
     if pick.kind == "day" and pick.plan_day is not None:
         suffix = " (종합: 후보 중 1개)" if pick.composite else ""
         return f"📚 {pick.day}일 차 · {pick.plan_day.week}주 차: {pick.plan_day.topic}{suffix}"
-    if pick.kind == "catchup":
-        return "🔁 따라잡기 날"
     if pick.kind == "extra":
         total = len(catalog.plan.extras) if catalog.plan else 0
         return f"🧩 심화 문제 {pick.extra_index}/{total}"
@@ -48,15 +52,23 @@ def _heading(pick: DayPick, catalog: Catalog) -> str:
 
 
 def build_daily(
-    pick: DayPick, catalog: Catalog, progress: Progress, date_kst: date, *, test_mode: bool = False
+    pick: DayPick,
+    catalog: Catalog,
+    progress: Progress,
+    date_kst: date,
+    *,
+    test_mode: bool = False,
+    reposted: bool = False,
 ) -> dict[str, Any]:
     title, header = _header(_heading(pick, catalog), test_mode)
     blocks: list[dict[str, Any]] = [header]
+    if reposted:
+        blocks.append(_context(REPOSTED_NOTE))
     time_line = f"⏱ 예상 {pick.minutes}분 (60~90분 기준)"
     if pick.minutes > 90:
         time_line += "   ⚠️ 오늘 분량이 90분을 넘어요"
     elif pick.minutes < 60:
-        time_line += "   남는 시간에는 '시간이 남으면'이나 밀린 문제를 해 보세요"
+        time_line += "   남는 시간에는 '시간이 남으면' 항목을 해 보세요"
     intro = [time_line]
     if pick.kind == "day" and pick.plan_day is not None:
         intro.append(f"*오늘 실습* {escape_mrkdwn(pick.plan_day.practice)}")
@@ -98,12 +110,6 @@ def build_daily(
             f"*시간이 남으면* {escape_mrkdwn(second.title if second else pick.second_id)} — "
             f"`/lab-start {pick.second_id}`"
         )
-    if pick.backlog:
-        tail.append("*밀린 문제*")
-        tail += [
-            f"• {escape_mrkdwn(catalog.scenarios[b].title)} — `/lab-start {b}`"
-            for b in pick.backlog
-        ]
     active = prog.active_scenario(progress)
     if active and active != pick.main_id:
         other = catalog.scenarios.get(active)
@@ -117,7 +123,25 @@ def build_daily(
             f"터미널: `{CLI} start {pick.main_id}`"
         )
     )
+    blocks.append(_context(GATE_NOTE))
     return {"text": title, "blocks": blocks}
+
+
+def build_reminder(
+    title: str, days: int, *, hint: str | None = None, test_mode: bool = False
+) -> dict[str, Any]:
+    """Thread reply under the open problem (contracts/slack-message.md 리마인드)."""
+    lines = [
+        f"⏳ 아직 해결 전이에요 · 게시 후 {days}일",
+        "✅가 달리면 다음 날 아침에 다음 문제가 올라와요.",
+    ]
+    blocks = [_section("\n".join(lines))]
+    if hint is not None:
+        blocks.append(
+            _section(f"*💡 힌트 1단계*\n{escape_mrkdwn(hint.strip())}\n더 필요하면 `/lab-hint`")
+        )
+    prefix = "[TEST] " if test_mode else ""
+    return {"text": f"{prefix}아직 해결 전: {title}", "blocks": blocks}
 
 
 def build_weekly(summary: WeeklySummary, *, test_mode: bool = False) -> dict[str, Any]:
@@ -139,7 +163,12 @@ def build_weekly(summary: WeeklySummary, *, test_mode: bool = False) -> dict[str
     if summary.pending:
         lines.append("*회고 대기*")
         lines += [f"• {escape_mrkdwn(t)} (시도 {n})" for t, n in summary.pending]
-    lines.append(f"*밀린 문제* {summary.backlog}개")
+    lines.append(
+        f"*오늘의 문제* 해결 {summary.solved_posts} · 미해결로 멈춘 날 {summary.stalled_days}일"
+    )
+    if summary.open_post:
+        open_title, days = summary.open_post
+        lines.append(f"*지금 열린 문제* {escape_mrkdwn(open_title)} (게시 후 {days}일)")
     if summary.next_topic:
         lines.append(f"*다음 주제* {escape_mrkdwn(summary.next_topic)}")
     blocks.append(_section("\n".join(lines)))

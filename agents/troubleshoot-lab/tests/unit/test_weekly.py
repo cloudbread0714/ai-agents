@@ -84,7 +84,7 @@ def test_counts_reports_answers_pending_and_weak_field(tmp_path):
     assert s.pending == [("시나리오 n1", 2), ("시나리오 l1", 1)]
     # network: 2 hints; linux: 1 hint + 2×give-up = 3
     assert s.weak_field == "linux"
-    assert s.backlog == 1  # w1 posted, unsolved
+    assert (s.solved_posts, s.stalled_days, s.open_post) == (0, 0, None)  # w1 is a legacy record
     assert s.next_topic == "주제 4"
     assert not s.empty
 
@@ -132,4 +132,51 @@ def test_weekly_message_lines(tmp_path):
     assert "*회고* 완료 0개 · 면접 질문 답변 0개" in text
     assert "*회고 대기*\n• 시나리오 l1 (시도 1)" in text
     assert "*약한 분야* ② 리눅스 서버" in text
-    assert "*밀린 문제* 0개" in text
+    assert "*오늘의 문제* 해결 0 · 미해결로 멈춘 날 0일" in text
+    assert "밀린 문제" not in text and "지금 열린 문제" not in text
+
+
+def _gated(day, main, *, outcome, resolved_at=None, reminders=()):
+    return DailyPost(
+        date_kst=day,
+        kind="day",
+        day=day.day % 21 + 1,
+        main_kind="scenario",
+        main_id=main,
+        posted_at=NOW,
+        channel="C0LAB",
+        ts=f"{day.day}.1",
+        outcome=outcome,
+        resolved_at=resolved_at,
+        reminders=list(reminders),
+    )
+
+
+def test_solve_gate_counts_and_open_problem(tmp_path):
+    repo, cat = _setup(tmp_path)
+    posted = Posted(
+        daily=[
+            # solved last week: not counted
+            _gated(date(2026, 10, 20), "n1", outcome="solved", resolved_at=_at(25, 1)),
+            _gated(
+                date(2026, 10, 24),
+                "n1",
+                outcome="solved",
+                resolved_at=_at(27, 1),
+                reminders=[date(2026, 10, 25), date(2026, 10, 26)],  # 10/25 is last week
+            ),
+            _gated(date(2026, 10, 28), "w1", outcome="solved", resolved_at=_at(28, 1)),
+            _gated(
+                date(2026, 10, 29),
+                "l1",
+                outcome="open",
+                reminders=[date(2026, 10, 30), date(2026, 10, 31)],
+            ),
+        ]
+    )
+    s = summarize(cat, Progress(), posted, SUNDAY_RUN, repo)
+    assert (s.solved_posts, s.stalled_days) == (2, 3)
+    assert s.open_post == ("시나리오 l1", 3)
+    text = "\n".join(b["text"]["text"] for b in build_weekly(s)["blocks"] if "text" in b)
+    assert "*오늘의 문제* 해결 2 · 미해결로 멈춘 날 3일" in text
+    assert "*지금 열린 문제* 시나리오 l1 (게시 후 3일)" in text
