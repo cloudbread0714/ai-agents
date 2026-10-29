@@ -28,10 +28,23 @@ line-length = 100
 select = ["E", "F", "I", "B", "UP"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["shared", "news_digest", "nd_support", "troubleshoot_lab", "tl_support"]
+known-first-party = [
+    "shared",
+    "news_digest",
+    "nd_support",
+    "troubleshoot_lab",
+    "tl_support",
+    "job_apply",
+    "ja_support",
+]
 
 [tool.pytest.ini_options]
-testpaths = ["shared/tests", "agents/news-digest/tests", "agents/troubleshoot-lab/tests"]
+testpaths = [
+    "shared/tests",
+    "agents/news-digest/tests",
+    "agents/troubleshoot-lab/tests",
+    "agents/job-apply/tests",
+]
 addopts = "--import-mode=importlib"
 # src paths too: workspace packages import even if the editable .pth is skipped
 # (e.g. a .venv inside an iCloud-synced folder gets its files flagged hidden).
@@ -41,5 +54,12 @@ pythonpath = [
     "agents/news-digest/tests",
     "agents/troubleshoot-lab/src",
     "agents/troubleshoot-lab/tests",
+    "agents/job-apply/src",
+    "agents/job-apply/tests",
 ]
-markers = ["sandbox: needs real docker + kind (LAB_SANDBOX=1)"]
+# PyMuPDF's SWIG bindings warn on import under Python 3.12.
+filterwarnings = ["ignore:builtin type .* has no __module__ attribute:DeprecationWarning"]
+markers = [
+    "sandbox: needs real docker + kind (LAB_SANDBOX=1)",
+    "render: needs LibreOffice (JOB_RENDER=1)",
+]

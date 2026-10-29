@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# Run the job CLI with the source trees on PYTHONPATH, so it works even when the
+# editable install's .pth is skipped.
+set -euo pipefail
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+# Local Slack values (SLACK_BOT_TOKEN, ...); values already in the shell win.
+ENV_FILE="$ROOT/agents/job-apply/.env"
+if [ -f "$ENV_FILE" ]; then
+  while IFS='=' read -r key value || [ -n "$key" ]; do
+    case "$key" in '' | \#*) continue ;; esac
+    if [ -z "${!key+x}" ]; then export "$key=$value"; fi
+  done <"$ENV_FILE"
+fi
+export PYTHONPATH="$ROOT/shared/src:$ROOT/agents/job-apply/src${PYTHONPATH:+:$PYTHONPATH}"
+exec uv run --quiet --project "$ROOT" --package job-apply python -m job_apply "$@"

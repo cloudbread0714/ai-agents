@@ -188,3 +188,103 @@ def test_api_errors_and_logs_never_contain_token(httpx_mock, caplog):
     for record in caplog.records:
         assert TOKEN not in record.getMessage()
         assert TOKEN not in str(getattr(record, "fields", ""))
+
+
+def test_conversations_history_follows_cursor(httpx_mock):
+    httpx_mock.add_response(
+        url=f"{API}conversations.history?channel=C0JOB&limit=200",
+        json={
+            "ok": True,
+            "messages": [{"ts": "3"}, {"ts": "2"}],
+            "response_metadata": {"next_cursor": "c1"},
+        },
+    )
+    httpx_mock.add_response(
+        url=f"{API}conversations.history?channel=C0JOB&limit=200&cursor=c1",
+        json={"ok": True, "messages": [{"ts": "1"}], "response_metadata": {"next_cursor": ""}},
+    )
+    from shared.slack import conversations_history
+
+    assert [m["ts"] for m in conversations_history(TOKEN, "C0JOB", base_delay=0)] == [
+        "3",
+        "2",
+        "1",
+    ]
+
+
+def test_conversations_history_limit_stops_early(httpx_mock):
+    httpx_mock.add_response(
+        url=f"{API}conversations.history?channel=C0JOB&limit=1",
+        json={"ok": True, "messages": [{"ts": "3"}], "response_metadata": {"next_cursor": "c"}},
+    )
+    from shared.slack import conversations_history
+
+    assert len(conversations_history(TOKEN, "C0JOB", limit=1, base_delay=0)) == 1
+
+
+def test_conversations_replies_drops_parent(httpx_mock):
+    httpx_mock.add_response(
+        url=f"{API}conversations.replies?channel=C0JOB&ts=1.0&limit=200",
+        json={"ok": True, "messages": [{"ts": "1.0"}, {"ts": "1.1", "text": "body"}]},
+    )
+    from shared.slack import conversations_replies
+
+    assert conversations_replies(TOKEN, "C0JOB", "1.0", base_delay=0) == [
+        {"ts": "1.1", "text": "body"}
+    ]
+
+
+def test_upload_files_two_urls_then_one_complete(httpx_mock):
+    from urllib.parse import parse_qs
+
+    from shared.slack import upload_files
+
+    for n in (1, 2):
+        httpx_mock.add_response(
+            url=API + "files.getUploadURLExternal",
+            json={"ok": True, "upload_url": f"https://files.slack.com/up/{n}", "file_id": f"F{n}"},
+        )
+        httpx_mock.add_response(url=f"https://files.slack.com/up/{n}", text=f"OK - {n}")
+    httpx_mock.add_response(url=API + "files.completeUploadExternal", json={"ok": True})
+    ids = upload_files(
+        TOKEN,
+        "C0JOB",
+        [("a_resume.pdf", b"%PDF-1"), ("a_portfolio.pdf", b"%PDF-22")],
+        thread_ts="1.0",
+        base_delay=0,
+    )
+    assert ids == ["F1", "F2"]
+    first = parse_qs(
+        httpx_mock.get_requests(url=API + "files.getUploadURLExternal")[0].read().decode()
+    )
+    assert first == {"filename": ["a_resume.pdf"], "length": ["6"]}
+    upload = httpx_mock.get_request(url="https://files.slack.com/up/2")
+    assert "Authorization" not in upload.headers and b"%PDF-22" in upload.read()
+    done = parse_qs(
+        httpx_mock.get_request(url=API + "files.completeUploadExternal").read().decode()
+    )
+    assert json.loads(done["files"][0]) == [
+        {"id": "F1", "title": "a_resume.pdf"},
+        {"id": "F2", "title": "a_portfolio.pdf"},
+    ]
+    assert done["channel_id"] == ["C0JOB"] and done["thread_ts"] == ["1.0"]
+
+
+def test_upload_failure_raises_api_error(httpx_mock):
+    from shared.slack import upload_files
+
+    httpx_mock.add_response(
+        url=API + "files.getUploadURLExternal",
+        json={"ok": True, "upload_url": "https://files.slack.com/up/1", "file_id": "F1"},
+    )
+    for _ in range(3):
+        httpx_mock.add_response(url="https://files.slack.com/up/1", status_code=502)
+    with pytest.raises(SlackApiError) as excinfo:
+        upload_files(TOKEN, "C0JOB", [("a.pdf", b"x")], base_delay=0)
+    assert excinfo.value.code == "HTTP 502"
+
+
+def test_internal_error_code_is_retried(httpx_mock):
+    httpx_mock.add_response(json={"ok": False, "error": "internal_error"})
+    httpx_mock.add_response(json={"ok": True, "user_id": "U0BOT"})
+    assert auth_test(TOKEN, base_delay=0) == "U0BOT"

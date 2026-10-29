@@ -12,7 +12,24 @@
       "Bash(agents/troubleshoot-lab/bin/lab measure:*)",
       "Bash(agents/troubleshoot-lab/bin/lab inject:*)",
       "Bash(agents/troubleshoot-lab/bin/lab report:*)",
-      "Bash(agents/troubleshoot-lab/bin/lab shell:*)"
+      "Bash(agents/troubleshoot-lab/bin/lab shell:*)",
+
+      "Bash(agents/job-apply/bin/job doctor:*)",
+      "Bash(agents/job-apply/bin/job fetch:*)",
+      "Bash(agents/job-apply/bin/job init:*)",
+      "Bash(agents/job-apply/bin/job resume-pdf:*)",
+      "Bash(agents/job-apply/bin/job apply:*)",
+      "Bash(agents/job-apply/bin/job note-issue:*)",
+      "Bash(agents/job-apply/bin/job verify:*)",
+      "Bash(agents/job-apply/bin/job complete:*)",
+      "Bash(agents/job-apply/bin/job status:*)",
+      "Bash(agents/job-apply/bin/job fail:*)",
+      "Bash(agents/job-apply/bin/job inbox:*)",
+      "Bash(agents/job-apply/bin/job skip:*)"
+    ],
+    "deny": [
+      "Edit(agents/job-apply/private/**)",
+      "Write(agents/job-apply/private/**)"
     ]
   }
 }

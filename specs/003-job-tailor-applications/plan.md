@@ -69,7 +69,7 @@
 
 | 원칙 | 판정 | 근거 |
 |------|------|------|
-| I. 모노레포 경계 | ✅(예외 1건) | 코드는 `agents/job-apply/`에 둔다. 공용 유틸은 `shared`의 retry·logging·config·files를 쓴다. Slack Web API 클라이언트는 지금 job-apply만 쓰므로 에이전트 안에 두고, 두 번째 사용처가 생기면 `shared/`로 옮긴다(R9). `.claude/commands/`는 경로가 고정된 예외다 |
+| I. 모노레포 경계 | ✅ | 코드는 `agents/job-apply/`에 둔다. 공용 유틸은 `shared`의 retry·logging·config·files·slack을 쓴다. Slack Web API 함수는 004(lab)도 쓰므로 `shared/slack.py`에 둔다(R9). `.claude/commands/`는 경로가 고정된 예외다 |
 | II. Python 3.12 + uv | ✅ | workspace 멤버로 추가하고 `uv.lock`에 반영한다. LibreOffice는 외부 실행 파일이다(doctor로 확인) |
 | III. pytest 동반 | ✅ | 모든 CLI 단계에 단위·통합 테스트를 둔다. Slack·웹은 pytest-httpx로 모킹한다. 기본 `uv run pytest`는 네트워크·LibreOffice 없이 통과한다 |
 | IV. 비밀값 환경변수 | ✅ | `SLACK_BOT_TOKEN`만 환경변수로 받는다. 채널 ID는 설정 파일에 둔다(비밀 아님, `load_yaml`의 비밀 키 검사 통과). `.env.example`을 제공한다. 로그에 토큰·Authorization 헤더를 남기지 않는다 |
@@ -79,7 +79,7 @@
 | job: 최종 제출은 사람이 | ✅ | 제출·로그인·폼 입력 기능이 없다. 슬래시 명령 규칙 4. 완료 답글에도 "제출은 직접" 문구를 넣는다 |
 | job: 개인정보 커밋 금지 | ✅ | `.gitignore`를 `private/`, `applications/`, `.job-state/`로 바꾸고, `doctor`가 `git check-ignore`로 확인한다. 테스트는 가상 데이터만 쓴다 |
 
-**Post-design re-check**: 위반 없음. 예외 1건은 Complexity Tracking에 적었다.
+**Post-design re-check**: 위반 없음. (구현 중 갱신: 004가 `shared/slack.py`에 Web API를 먼저 추가해 Slack 클라이언트를 에이전트 안에 두던 예외가 없어졌다.)
 
 ## Project Structure
 
@@ -121,7 +121,6 @@ agents/job-apply/
 │   ├── config.py                        # job.yaml 모델, 경로
 │   ├── models.py                        # Posting, Meta, TailorPlan, RenderIssue (pydantic)
 │   ├── sources.py                       # 원본 확인·해시·base 복사·resume.txt 추출
-│   ├── slack_api.py                     # Web API 클라이언트(history, replies, reactions, post, upload)
 │   ├── inbox.py                         # 메시지 상태 계산, 대상 선택, ❓ 요청
 │   ├── fetch.py                         # 공고 가져오기·JSON-LD/NEXT_DATA·trafilatura·실패 판정
 │   ├── dedup.py                         # url_key 정규화, done 폴더 찾기
@@ -151,4 +150,3 @@ agents/job-apply/
 | Violation | Why Needed | Simpler Alternative Rejected Because |
 |-----------|------------|-------------------------------------|
 | `.claude/commands/job-*.md`, `tailor.md`, `.claude/settings.json`이 `agents/` 밖에 있음 (헌법 I) | Claude Code가 그 경로만 읽는다 | 다른 에이전트와 같은 기존 예외다 |
-| Slack Web API 클라이언트를 `shared/`가 아닌 에이전트 안에 둠 (헌법 I·V의 SHOULD) | 현재 사용처가 job-apply 하나뿐이다. 재시도·로깅은 `shared.retry`·`shared.logging`을 그대로 쓴다 | 쓰는 곳이 하나인데 `shared/`에 두면 헌법 I의 "둘 이상이 함께 쓰는 코드" 기준에 맞지 않는다. 두 번째 사용처가 생기면 옮긴다 |

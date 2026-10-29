@@ -123,7 +123,7 @@
   - 그 밖의 `ok:false`는 바로 실패로 처리한다.
   - 로그에는 토큰을 남기지 않는다(`Authorization` 헤더를 로깅하지 않음).
 - **Rationale**: 기존 `shared/slack.py`(웹훅 전송)와 같은 방식이고 의존성이 늘지 않는다. 웹훅으로는 읽기·반응·파일 올리기를 할 수 없다.
-- **위치**: 지금은 job-apply만 쓰므로 `agents/job-apply/src/job_apply/slack_api.py`에 둔다. 두 번째 에이전트가 쓰게 되면 `shared/`로 옮긴다(헌법 I).
+- **위치**: `shared/slack.py`에 둔다(헌법 I). 처음에는 job-apply 안에 두려 했으나, 구현 직전에 004(lab)가 같은 모듈에 봇 토큰 Web API를 추가해 두 에이전트가 함께 쓰게 됐다. job-apply는 `conversations_history`, `conversations_replies`, `upload_files`를 더했다.
 - **Alternatives considered**: `slack_sdk`는 기능이 충분하지만, 재시도·로깅을 `shared.retry` 규칙에 맞추려면 어차피 감싸야 하고 의존성만 늘어난다.
 
 ## R10. "처리됨" 판단과 중복 확인

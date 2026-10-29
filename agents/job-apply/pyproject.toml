@@ -1,0 +1,37 @@
+[project]
+name = "job-apply"
+version = "0.1.0"
+description = "Tailored resume and portfolio per job posting, driven from Claude Code (submission stays manual)"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "shared",
+    "httpx>=0.27",
+    "python-pptx>=1.0,<2",
+    "pymupdf>=1.24",
+    "trafilatura>=2.0",
+    "markdown>=3.7",
+    "jsonschema>=4.23",
+    "pydantic>=2.7",
+    "pyyaml>=6.0",
+]
+
+[project.scripts]
+job = "job_apply.cli:main"
+
+[tool.uv.sources]
+shared = { workspace = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/job_apply"]
+
+[tool.pytest.ini_options]
+addopts = "--import-mode=importlib"
+testpaths = ["tests"]
+pythonpath = ["src", "../../shared/src", "tests"]
+# PyMuPDF's SWIG bindings warn on import under Python 3.12.
+filterwarnings = ["ignore:builtin type .* has no __module__ attribute:DeprecationWarning"]
+markers = ["render: needs LibreOffice (JOB_RENDER=1)"]
