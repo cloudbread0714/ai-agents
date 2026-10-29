@@ -11,7 +11,7 @@ from tl_support import (
     tag_sentinel,
 )
 from troubleshoot_lab.catalog import load_catalog
-from troubleshoot_lab.messages import build_daily
+from troubleshoot_lab.messages import GATE_NOTE, build_daily, build_reminder
 from troubleshoot_lab.models import Progress
 from troubleshoot_lab.planner import DayPick
 
@@ -40,7 +40,7 @@ def _day_pick(cat, day, main, **kw):
 
 def test_scenario_day_message(lab_root):
     cat = load_catalog(lab_root)
-    pick = _day_pick(cat, 2, "d-easy", minutes=60, second_id="w-easy", backlog=["d-mid"])
+    pick = _day_pick(cat, 2, "d-easy", minutes=60, second_id="w-easy")
     payload = build_daily(pick, cat, Progress(), DAY)
     text = _text(payload)
     assert payload["text"] == "📚 2일 차 · 1주 차: 주제 2"
@@ -51,8 +51,13 @@ def test_scenario_day_message(lab_root):
     assert "`/lab-start d-easy`  → 정상 상태 측정 → 장애 재현" in text
     assert "• ⬜ 미션 m-one — `/lab-start m-one`" in text
     assert "*시간이 남으면* 시나리오 w-easy — `/lab-start w-easy`" in text
-    assert "*밀린 문제*\n• 시나리오 d-mid — `/lab-start d-mid`" in text
+    assert "밀린 문제" not in text
     assert "2026-10-26 (월)" in text
+    assert payload["blocks"][-1] == {
+        "type": "context",
+        "elements": [{"type": "mrkdwn", "text": GATE_NOTE}],
+    }
+    assert "✅가 있어야 다음 문제가 올라와요" in GATE_NOTE
 
 
 def test_concept_day_message(lab_root):
@@ -69,14 +74,13 @@ def test_time_lines(lab_root):
     assert "90분을 넘어요" in long and "남는 시간에는" in short
 
 
-def test_review_catchup_extra_and_composite_headers(lab_root):
+def test_review_extra_and_composite_headers(lab_root):
     cat = load_catalog(lab_root)
     review = _text(
         build_daily(_day_pick(cat, 4, "d-easy", minutes=60, review_flag=True), cat, Progress(), DAY)
     )
     assert "· 복습" in review and "이번에는 이 관점으로: 실습 4" in review
     for kind, extra, header in [
-        ("catchup", {}, "🔁 따라잡기 날"),
         ("review", {}, "🔁 복습 문제"),
         ("extra", {"extra_index": 1}, "🧩 심화 문제 1/0"),
     ]:
@@ -133,3 +137,27 @@ def test_mrkdwn_escaped(tmp_path):
     cat = load_catalog(make_catalog(tmp_path, scenarios=[spec]))
     text = _text(build_daily(_day_pick(cat, 2, "esc", minutes=60), cat, Progress(), DAY))
     assert "&lt;!channel&gt; &amp; &lt;b&gt;" in text
+
+
+def test_reposted_note_comes_first(lab_root):
+    cat = load_catalog(lab_root)
+    payload = build_daily(
+        _day_pick(cat, 2, "d-easy", minutes=60), cat, Progress(), DAY, reposted=True
+    )
+    assert payload["blocks"][1]["elements"][0]["text"] == (
+        "이전 메시지를 찾을 수 없어 같은 문제를 다시 올려요."
+    )
+
+
+def test_reminder_without_hint():
+    payload = build_reminder("시나리오 <x>", 2)
+    text = _text(payload)
+    assert payload["text"] == "아직 해결 전: 시나리오 <x>"
+    assert "⏳ 아직 해결 전이에요 · 게시 후 2일" in text
+    assert "✅가 달리면 다음 날 아침에 다음 문제가 올라와요." in text
+    assert "힌트" not in text
+
+
+def test_reminder_with_hint_is_escaped():
+    text = _text(build_reminder("t", 3, hint="  check <svc> & logs\n"))
+    assert "*💡 힌트 1단계*\ncheck &lt;svc&gt; &amp; logs\n더 필요하면 `/lab-hint`" in text

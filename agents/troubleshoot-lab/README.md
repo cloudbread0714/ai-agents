@@ -1,9 +1,10 @@
 # troubleshoot-lab
 
 내 컴퓨터의 실습 환경(docker compose + kind)에 장애를 주입하고, 원인을 찾아 고치며 트러블슈팅을 연습하는 에이전트입니다.
-[커리큘럼](docs/curriculum.md)의 21일 학습 계획에 맞춰 매일 08:40 KST 무렵 오늘의 주제와 문제를 Slack에 올리고,
-일요일에는 한 주 학습 요약을 올립니다.
-스펙: [`specs/002-lab-troubleshoot-practice/`](../../specs/002-lab-troubleshoot-practice/spec.md)
+[커리큘럼](docs/curriculum.md)의 21일 학습 계획에 맞춰 Slack에 오늘의 문제를 올리고, 일요일에는 한 주 학습 요약을 올립니다.
+문제는 한 번에 하나만 열려 있고, 그 메시지에 ✅가 달려야 다음 날 아침에 다음 문제가 올라와요.
+스펙: [`specs/002-lab-troubleshoot-practice/`](../../specs/002-lab-troubleshoot-practice/spec.md),
+[`specs/004-lab-solve-gated-daily/`](../../specs/004-lab-solve-gated-daily/spec.md)
 
 ```
 워밍업 미션(명령 따라 하기, 자동 판정) ─▶ 시나리오 열림 ─▶ /lab-start (기본 상태로 복원)
@@ -90,34 +91,48 @@ eval "$(agents/troubleshoot-lab/bin/lab env)"   # KUBECONFIG, COMPOSE_FILE, COMP
   `data/progress.json` 과 `docs/reports/` 만 커밋해서 push 합니다.
   - `main` 브랜치에서만 push 해요. 매일 알림이 main 의 기록을 읽기 때문이에요.
   - 커밋 메시지에 `[skip ci]` 를 붙여서 CI가 돌지 않아요.
-- `.github/workflows/troubleshoot-lab.yml` 이 매일 UTC 23:40(KST 08:40)에 오늘의 일차를 게시합니다. 선택은 규칙 기반이고 LLM은 쓰지 않아요.
-  - 학습 계획은 [`curriculum/plan.yaml`](curriculum/plan.yaml)이에요. 1~21일 차 주제, 실습, 시나리오(또는 개념 미션)가 들어 있어요.
-  - 게시한 순서대로 다음 일차로 넘어가요. 하루 분량은 주 항목과 연결 워밍업을 합쳐 60~90분이에요.
-  - 일차에 시나리오가 2개면 두 번째는 "시간이 남으면"으로 붙어요.
-  - 게시했지만 끝내지 않은 시나리오가 3개 이상 밀리면 새 일차 대신 따라잡기 날이 돼요.
+- `.github/workflows/troubleshoot-lab.yml` 이 매일 UTC 23:40(KST 08:40)에 실행돼요. 선택은 규칙 기반이고 LLM은 쓰지 않아요.
+  - 열린 문제가 없으면 다음 문제를 게시해요.
+  - 열린 문제 메시지에 ✅가 있으면 해결로 기록하고 다음 문제를 게시해요. ✅는 내가 달았거나 `/lab-check` 가 자동으로 단 것만 쳐요.
+  - ✅가 없으면 새 문제 대신 그 메시지 스레드에 "아직 해결 전" 리마인드를 하루 한 번 남겨요.
+    게시 후 3일이 지나면 리마인드에 힌트 1단계가 함께 들어가요(힌트 사용 횟수에는 안 세요).
+  - ⏭️ 같은 다른 반응이나 `/lab-giveup` 으로는 넘어가지 않아요. 다음 문제를 받으려면 ✅가 필요해요.
+- 학습 계획은 [`curriculum/plan.yaml`](curriculum/plan.yaml)이에요. 1~21일 차 주제, 실습, 시나리오(또는 개념 미션)가 들어 있어요.
+  - "N일 차"는 날짜가 아니라 문제를 해결할 때마다 한 칸씩 나아가요. 하루 분량은 주 항목과 연결 워밍업을 합쳐 60~90분이에요.
+  - 일차에 시나리오가 2개면 두 번째는 "시간이 남으면"으로 붙어요. ✅는 둘 다 끝냈을 때 달려요.
   - 7일 차는 1~4번 중 아직 약한 것을 골라 종합 문제로 내요.
   - 21일 차 다음은 심화 시나리오, 그다음은 복습 문제예요.
-- KST 일요일에는 주간 요약도 함께 올라가요. 계획 진행도, 해결·포기·힌트, 보고서 완료·대기, 약한 분야, 밀린 문제, 다음 주제가 들어가요.
-- 게시 기록은 `data/posted.json` 이고 봇이 커밋합니다.
+- `/lab-check` 로 오늘의 문제를 끝내면 그 Slack 메시지에 봇이 ✅를 달아요.
+  - 열린 문제는 로컬 `data/posted.json` 에서 찾으니, 문제를 풀기 전에 `git pull` 로 최신 게시 기록을 받아 두세요.
+  - Slack 값이 없거나 실패해도 검증 결과는 그대로예요. 그때는 Slack에서 직접 ✅를 달면 돼요.
+- KST 일요일에는 주간 요약도 함께 올라가요. 계획 진행도, 해결·포기·힌트, 보고서 완료·대기, 약한 분야,
+  오늘의 문제 해결 수와 미해결로 멈춘 날 수, 지금 열린 문제, 다음 주제가 들어가요.
+- 게시 기록은 `data/posted.json` 이고 봇이 커밋합니다. 메시지 위치(채널·메시지 ID), 해결 여부, 리마인드 날짜도 여기 남아요.
 
 ### 채널과 환경변수
 
 | 변수 | 용도 |
 |------|------|
-| `SLACK_WEBHOOK_LAB_URL` | 정상 채널 #daily-lab |
-| `SLACK_WEBHOOK_URL_TEST` | 테스트 채널 #agent-test (news-digest와 공유, 실패 알림도 여기로) |
+| `SLACK_BOT_TOKEN` | Slack 앱 봇 토큰(`xoxb-…`). lab 채널 게시·반응 조회·반응 달기 |
+| `SLACK_LAB_CHANNEL_ID` | 정상 채널 #daily-lab 의 채널 ID |
+| `SLACK_USER_ID` | 내 Slack 사용자 ID. 이 사람(과 봇)이 단 ✅만 해결로 쳐요 |
+| `SLACK_WEBHOOK_URL_TEST` | 테스트 채널 #agent-test (news-digest와 공유, 실패 알림·미리 보기도 여기로) |
 | `LAB_SLACK_TARGET` | (선택) `test`(기본) 또는 `lab` |
 
-로컬에서 확인할 때는 `.env.example` 을 `.env` 로 복사해 채우고 다음처럼 실행하세요.
+Slack 앱에는 봇 권한 `chat:write`, `reactions:read`, `reactions:write` 가 필요하고, 봇을 #daily-lab 에 초대해 둬야 해요.
+
+로컬에서는 `.env.example` 을 `.env` 로 복사해 채우세요. `bin/lab` 이 `.env` 를 자동으로 읽어요(셸에 이미 있는 값이 우선).
+`/lab-check` 의 자동 ✅도 이 값을 써요.
 
 ```bash
-set -a; . agents/troubleshoot-lab/.env; set +a
 agents/troubleshoot-lab/bin/lab daily --dry-run --force                      # 출력만
 agents/troubleshoot-lab/bin/lab daily --dry-run --today 2026-11-01           # 일요일: 문제 + 주간 요약
-agents/troubleshoot-lab/bin/lab daily --target test --force                  # #agent-test 에 [TEST] 게시
+agents/troubleshoot-lab/bin/lab daily --target test --force                  # #agent-test 에 [TEST] 미리 보기
 ```
 
-GitHub Actions 에는 Secrets `SLACK_WEBHOOK_LAB_URL`, `SLACK_WEBHOOK_URL_TEST` 가 필요합니다.
+테스트 채널 실행은 반응을 읽지 않고 기록도 바꾸지 않아요. 열린 문제가 있으면 오늘 남길 리마인드를, 없으면 다음 문제를 보여 줘요.
+
+GitHub Actions 에는 Secrets `SLACK_BOT_TOKEN`, `SLACK_LAB_CHANNEL_ID`, `SLACK_USER_ID`, `SLACK_WEBHOOK_URL_TEST` 가 필요합니다.
 수동 실행은 Actions → troubleshoot-lab → Run workflow(`target`, `post`)에서 할 수 있어요.
 
 ## 콘텐츠 추가

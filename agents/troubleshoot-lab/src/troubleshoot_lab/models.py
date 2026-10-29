@@ -256,11 +256,28 @@ class DailyPost(_Strict):
     main_id: str
     second_id: str | None = None
     posted_at: AwareDatetime
+    # Solve-gated posting (004). All absent on records from before it: those read as finished.
+    channel: str | None = None
+    ts: str | None = None
+    outcome: Literal["open", "solved"] | None = None
+    resolved_at: AwareDatetime | None = None
+    reminders: list[date] = Field(default_factory=list)
+    reposted_at: AwareDatetime | None = None
 
     @model_validator(mode="after")
     def _day_rule(self) -> DailyPost:
         if (self.kind == "day") != (self.day is not None):
             raise ValueError("day is set exactly when kind=day")
+        if (self.channel is None) != (self.ts is None):
+            raise ValueError("channel and ts are set together")
+        if self.outcome is not None and self.ts is None:
+            raise ValueError("outcome needs a message location (channel, ts)")
+        if (self.outcome == "solved") != (self.resolved_at is not None):
+            raise ValueError("resolved_at is set exactly when outcome=solved")
+        if self.reminders != sorted(set(self.reminders)) or any(
+            r <= self.date_kst for r in self.reminders
+        ):
+            raise ValueError("reminders must be unique, ascending and after date_kst")
         return self
 
 
@@ -282,4 +299,6 @@ class Posted(_Strict):
             raise ValueError("daily.date_kst must be unique")
         if len(weeks) != len(set(weeks)):
             raise ValueError("weekly.week_start_kst must be unique")
+        if sum(d.outcome == "open" for d in self.daily) > 1:
+            raise ValueError("at most one daily post can be open")
         return self

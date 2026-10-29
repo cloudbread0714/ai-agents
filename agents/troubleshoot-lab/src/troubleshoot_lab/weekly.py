@@ -12,8 +12,9 @@ from troubleshoot_lab import posted as posted_mod
 from troubleshoot_lab import progress as prog
 from troubleshoot_lab import report as rep
 from troubleshoot_lab.catalog import Catalog
+from troubleshoot_lab.gate import days_open
 from troubleshoot_lab.models import FIELDS, Posted, Progress
-from troubleshoot_lab.planner import backlog, plan_today
+from troubleshoot_lab.planner import plan_today
 
 KST = ZoneInfo("Asia/Seoul")
 PENDING_SHOWN = 5
@@ -31,7 +32,9 @@ class WeeklySummary:
     answered: int = 0
     pending: list[tuple[str, int]] = field(default_factory=list)  # (title, attempt)
     weak_field: str | None = None
-    backlog: int = 0
+    solved_posts: int = 0  # daily problems closed by ✅ this week (004)
+    stalled_days: int = 0  # days that got a reminder instead of a new problem
+    open_post: tuple[str, int] | None = None  # (title, days since posted)
     next_topic: str | None = None
     empty: bool = True
 
@@ -76,7 +79,10 @@ def summarize(
     pending = [a for a in prog.finished_attempts(progress) if rep.status(a, repo_root) != "done"]
     s.pending = [(_title(catalog, a.scenario_id), a.attempt) for a in pending[:PENDING_SHOWN]]
     s.weak_field = _weak_field(catalog, progress, start, now)
-    s.backlog = len(backlog(catalog, progress, posted, today))
+    s.solved_posts = sum(1 for d in posted.daily if d.resolved_at and start <= d.resolved_at <= now)
+    s.stalled_days = sum(1 for d in posted.daily for r in d.reminders if start_day <= r <= today)
+    if (current := posted_mod.open_post(posted)) is not None:
+        s.open_post = (_title(catalog, current.main_id), days_open(current, today))
     nxt = plan_today(catalog, progress, posted, today + timedelta(days=1))
     if nxt is not None:
         s.next_topic = nxt.plan_day.topic if nxt.plan_day else _title(catalog, nxt.main_id)

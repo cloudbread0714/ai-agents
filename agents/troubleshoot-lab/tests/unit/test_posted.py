@@ -81,3 +81,94 @@ def test_lookups():
     assert posted_mod.posted_ids(posted) == {"a", "b", "c"}  # missions are not scenarios
     assert posted_mod.posted_mains(posted) == {"c-one", "a", "c"}
     assert posted_mod.weekly_posted(posted, date(2026, 10, 19))
+
+
+def _gated(day, *, outcome="open", resolved_at=None, reminders=(), **kw):
+    return _daily(day, **kw).model_copy(
+        update={
+            "channel": "C0LAB",
+            "ts": "1.2",
+            "outcome": outcome,
+            "resolved_at": resolved_at,
+            "reminders": list(reminders),
+        }
+    )
+
+
+def test_records_without_message_location_read_as_finished(tmp_path):
+    path = tmp_path / "posted.json"
+    path.write_text(
+        '{"version": 2, "daily": [{"date_kst": "2026-10-27", "kind": "day", "day": 2,'
+        ' "main_kind": "scenario", "main_id": "s", "second_id": null,'
+        ' "posted_at": "2026-10-27T02:24:59Z"}], "weekly": []}'
+    )
+    post = posted_mod.load(path).daily[0]
+    assert (post.channel, post.ts, post.outcome, post.resolved_at, post.reposted_at) == (
+        None,
+        None,
+        None,
+        None,
+        None,
+    )
+    assert post.reminders == []
+    assert posted_mod.open_post(posted_mod.load(path)) is None
+
+
+def _validate(**fields):
+    base = {
+        "date_kst": date(2026, 11, 2),
+        "kind": "day",
+        "day": 3,
+        "main_kind": "scenario",
+        "main_id": "s",
+        "posted_at": NOW,
+    }
+    return DailyPost.model_validate({**base, **fields})
+
+
+@pytest.mark.parametrize(
+    "fields",
+    [
+        {"channel": "C0LAB"},  # channel and ts are set together
+        {"ts": "1.2"},
+        {"outcome": "open"},  # outcome needs a message location
+        {"channel": "C0LAB", "ts": "1.2", "outcome": "solved"},  # solved ⇔ resolved_at
+        {"channel": "C0LAB", "ts": "1.2", "outcome": "open", "resolved_at": NOW},
+        {"reminders": [date(2026, 11, 4), date(2026, 11, 3)]},  # ascending
+        {"reminders": [date(2026, 11, 3), date(2026, 11, 3)]},  # unique
+        {"reminders": [date(2026, 11, 2)]},  # after date_kst
+    ],
+)
+def test_gated_field_rules(fields):
+    with pytest.raises(ValidationError):
+        _validate(**fields)
+
+
+def test_gated_fields_valid():
+    post = _validate(
+        channel="C0LAB",
+        ts="1.2",
+        outcome="open",
+        reminders=[date(2026, 11, 3), date(2026, 11, 4)],
+    )
+    assert post.outcome == "open"
+
+
+def test_at_most_one_open_post():
+    with pytest.raises(ValidationError):
+        Posted(daily=[_gated(date(2026, 11, 2)), _gated(date(2026, 11, 3), main="t")])
+
+
+def test_open_post_lookup():
+    solved = _gated(date(2026, 11, 2), outcome="solved", resolved_at=NOW)
+    current = _gated(date(2026, 11, 3), main="t")
+    assert posted_mod.open_post(Posted(daily=[solved, current])).main_id == "t"
+    assert posted_mod.open_post(Posted(daily=[solved])) is None
+
+
+def test_save_keeps_open_post_past_retention(tmp_path):
+    path = tmp_path / "posted.json"
+    stale_open = _gated(date(2025, 10, 1), main="stuck", at=NOW - timedelta(days=400))
+    stale_done = _daily(date(2025, 10, 2), "old", at=NOW - timedelta(days=400))
+    posted_mod.save(path, Posted(daily=[stale_open, stale_done]), now=NOW)
+    assert [d.main_id for d in posted_mod.load(path).daily] == ["stuck"]

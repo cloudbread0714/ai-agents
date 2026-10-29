@@ -1,5 +1,7 @@
 # Contract: `lab` CLI
 
+> 004에서 변경: 오늘의 문제 게시·주간 요약 일부는 [`specs/004-lab-solve-gated-daily/contracts/cli.md`](../../004-lab-solve-gated-daily/contracts/cli.md)를 따른다.
+
 진입점은 `agents/troubleshoot-lab/bin/lab <subcommand>`(R10)이다.
 - stdout: 사람이 읽는 한국어 텍스트
 - stderr: 구조화 로그(JSON 한 줄)

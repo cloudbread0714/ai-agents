@@ -32,6 +32,7 @@ from troubleshoot_lab.models import (
     Scenario,
 )
 from troubleshoot_lab.progress import Attempt, ProgressStore
+from troubleshoot_lab.reactor import Reactor
 from troubleshoot_lab.runner import Runner
 from troubleshoot_lab.session import Session
 
@@ -85,6 +86,7 @@ class Learner:
         guard: Guard,
         measurer: MeasurerLike,
         diagnoser: Diagnoser | None = None,
+        reactor: Reactor | None = None,
         repo_root: Path | None = None,
         now: Callable[[], datetime] = lambda: datetime.now(UTC),
     ):
@@ -95,6 +97,7 @@ class Learner:
         self.guard = guard
         self.measurer = measurer
         self.diagnoser = diagnoser
+        self.reactor = reactor
         self.repo_root = repo_root or catalog.root.parents[1]
         self.now = now
 
@@ -118,6 +121,15 @@ class Learner:
                 return "mission", mission.id
             self.session.clear()
         return None
+
+    def _react(self, item_id: str) -> tuple[list[str], dict[str, Any]]:
+        """Mark today's Slack problem ✅ once ``item_id`` finishes it (004 FR-013). Returns the
+        lines to append and the ``LAB_RESULT`` field; both empty without a reactor."""
+        if self.reactor is None:
+            return [], {}
+        reaction = self.reactor.after_done(item_id, self._progress(), self.catalog)
+        lines = ["", reaction.message] if reaction.message else []
+        return lines, {"slack_reaction": reaction.status}
 
     def _title(self, item_id: str) -> str:
         item = self.catalog.get(item_id)
@@ -529,6 +541,7 @@ class Learner:
         self._record("scenario_solved", item_id, attempt=attempt.attempt, hints_used=attempt.hints)
         after_text = self._after_measure(scenario, attempt)
         attempt = prog.latest_attempt(self._progress(), item_id)
+        reaction_lines, reaction = self._react(item_id)
         text = "\n".join(
             [
                 f"🎉 해결했어요! (힌트 {attempt.hints}개 사용)",
@@ -539,9 +552,12 @@ class Learner:
                 "",
                 "👉 6단계: /lab-report 로 장애 보고서를 쓰고 면접 질문에 답해 보세요.",
                 "환경 원복: /lab-reset",
+                *reaction_lines,
             ]
         )
-        return self._scenario_out(text, "check", "solved", attempt=attempt, sync_suggested=True)
+        return self._scenario_out(
+            text, "check", "solved", attempt=attempt, sync_suggested=True, extra=reaction
+        )
 
     def _after_measure(self, scenario: Scenario, attempt: Attempt) -> str:
         try:
@@ -600,8 +616,14 @@ class Learner:
         if unlocked:
             lines += ["", "이제 시작할 수 있어요:"]
             lines += [f"  • {s.title} — /lab-start {s.id}" for s in unlocked]
+        reaction_lines, reaction = self._react(mission.id)
         return Outcome(
-            "\n".join(lines), "check", "mission_completed", kind="mission", id=mission.id
+            "\n".join([*lines, *reaction_lines]),
+            "check",
+            "mission_completed",
+            kind="mission",
+            id=mission.id,
+            extra=reaction,
         )
 
     def _newly_unlocked(self, mission_id: str) -> list[Scenario]:
