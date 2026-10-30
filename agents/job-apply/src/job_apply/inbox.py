@@ -7,6 +7,7 @@ except the per-posting cache under ``.job-state/inbox/``.
 
 from __future__ import annotations
 
+import html
 import json
 import re
 from collections.abc import Callable
@@ -16,7 +17,7 @@ from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
 
-from job_apply import dedup, report
+from job_apply import dedup, images, report
 from job_apply.config import Paths
 from job_apply.fetch import FetchResult
 from job_apply.models import FetchInfo, Posting
@@ -62,18 +63,23 @@ class InboxResult:
 
 
 def unwrap(text: str) -> tuple[str, list[str]]:
-    """Slack ``<url|label>`` → url; returns the plain text and every URL in order."""
+    """Slack ``<url|label>`` → url; returns the plain text and every URL in order.
+
+    Slack escapes ``&``, ``<`` and ``>`` in message text, URLs included, so both are
+    unescaped; a URL left with ``&amp;`` loses its query parameters.
+    """
     urls: list[str] = []
 
     def keep(match: re.Match) -> str:
-        urls.append(match.group(1))
+        urls.append(html.unescape(match.group(1)))
         return match.group(1)
 
     plain = _LINK.sub(keep, text)
     for bare in _BARE.findall(text):
+        bare = html.unescape(bare)
         if bare not in urls:
             urls.append(bare)
-    return plain, urls
+    return html.unescape(plain), urls
 
 
 def _is_user_message(m: dict[str, Any]) -> bool:
@@ -88,6 +94,12 @@ def save_posting(paths: Paths, posting: Posting, text: str) -> Path:
     text_path = paths.inbox / f"{posting.id}.txt"
     text_path.write_text(text.strip() + "\n", encoding="utf-8")
     return text_path
+
+
+def save_images(paths: Paths, posting_id: str, blobs: list[bytes]) -> list[str]:
+    """Body images under ``.job-state/inbox/<id>/``; repo-relative paths, empty when none
+    could be read."""
+    return [paths.rel(p) for p in images.save(blobs, paths.inbox / posting_id)]
 
 
 def load_posting(paths: Paths, posting_id: str) -> tuple[Posting, str]:
@@ -146,11 +158,16 @@ def collect(
 
     for m in targets:
         url = m.urls[0] if m.urls else None
+        image_paths: list[str] = []
         if m.state == "body_provided":
             body, fetch = m.thread_body or "", FetchInfo(status="skipped")
         elif url:
             got = fetcher(url)
-            if got.status != "ok":
+            if got.status == "images":
+                image_paths = save_images(paths, m.ts, got.images)
+                if not image_paths:
+                    got.status, got.reason = "failed", "본문 이미지를 열지 못함"
+            if got.status == "failed":
                 add_reaction(token, channel, m.ts, QUESTION, **slack_kw)
                 post_message(
                     token,
@@ -161,7 +178,7 @@ def collect(
                 )
                 result.requested_now.append(m.ts)
                 continue
-            body, fetch = got.text, FetchInfo(status="ok")
+            body, fetch = got.text, FetchInfo(status=got.status, reason=got.reason)
         else:
             body, fetch = m.text, FetchInfo(status="skipped")
         key = dedup.key_for(url, body)
@@ -187,6 +204,7 @@ def collect(
                 "fetch": fetch.status,
                 "duplicate_of": posting.duplicate_of,
                 "text_path": paths.rel(text_path),
+                "images": image_paths,
             }
         )
     return result

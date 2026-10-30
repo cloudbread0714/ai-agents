@@ -10,8 +10,9 @@ from __future__ import annotations
 import html as html_lib
 import json
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
+from urllib.parse import parse_qs, urljoin, urlsplit
 
 import httpx
 import trafilatura
@@ -30,13 +31,22 @@ _NEXT_RE = re.compile(r"<script[^>]*id=[\"']__NEXT_DATA__[\"'][^>]*>(.*?)</scrip
 _TAG_RE = re.compile(r"<[^>]+>")
 _HANGUL = re.compile(r"[가-힣]")
 _META_CHARSET = re.compile(rb"<meta[^>]+charset=[\"']?([\w-]+)", re.I)
+_OG_RE = re.compile(
+    r"<meta[^>]+property=[\"']og:(title|description)[\"'][^>]+content=\"([^\"]*)\"", re.I
+)
+_IMG_SRC = re.compile(r"<img\b[^>]*?\bsrc=[\"']([^\"']+)[\"']", re.I)
+MAX_IMAGES = 12
+MAX_IMAGE_BYTES = 15 * 1024 * 1024
+_JOBKOREA_GI = re.compile(r"/Recruit/GI_Read/(\d+)")
 
 
 @dataclass
 class FetchResult:
-    status: str  # ok | failed
+    status: str  # ok | images | failed
     text: str = ""
     reason: str | None = None
+    # status "images": the posting body is pictures; the session reads them (research R8).
+    images: list[bytes] = field(default_factory=list)
 
 
 class _Retry(Exception):
@@ -128,6 +138,42 @@ def judge(text: str, min_chars: int) -> str | None:
     return None
 
 
+def detail_url(url: str) -> str | None:
+    """Where a job board loads the posting body from, when the page itself is a shell.
+
+    Saramin fetches it by script and JobKorea puts it in an iframe, so the page at
+    ``url`` holds only site chrome.
+    """
+    parts = urlsplit(url)
+    host = parts.hostname or ""
+    if host.endswith("saramin.co.kr"):
+        rec = parse_qs(parts.query).get("rec_idx")
+        if rec and rec[0].isdigit():
+            return f"https://www.saramin.co.kr/zf_user/jobs/relay/view-detail?rec_idx={rec[0]}"
+    elif host.endswith("jobkorea.co.kr"):
+        if match := _JOBKOREA_GI.search(parts.path):
+            return f"https://www.jobkorea.co.kr/Recruit/GI_Read_Comt_Ifrm?Gno={match.group(1)}"
+    return None
+
+
+def og_summary(page: str) -> str:
+    """og:title and og:description (company, role, deadline on most boards)."""
+    found = dict((k.lower(), html_lib.unescape(v).strip()) for k, v in _OG_RE.findall(page))
+    return "\n".join(found[k] for k in ("title", "description") if found.get(k))
+
+
+def image_urls(page: str, base: str) -> list[str]:
+    urls: list[str] = []
+    for src in _IMG_SRC.findall(page):
+        src = html_lib.unescape(src.strip())
+        if src.startswith("data:"):
+            continue
+        full = urljoin(base, src)
+        if full not in urls:
+            urls.append(full)
+    return urls
+
+
 def decode(resp: httpx.Response) -> str:
     """Header charset, else ``<meta charset>``, else UTF-8, else CP949. Older Korean sites
     often send plain ``text/html`` with an EUC-KR body, which httpx would read as UTF-8."""
@@ -147,10 +193,10 @@ def fetch(
     url: str, cfg: FetchConfig, client: httpx.Client, *, base_delay: float = 1.0
 ) -> FetchResult:
     @retryable(retry_on=(_Retry,), max_attempts=3, base_delay=base_delay, target="fetch:posting")
-    def _get() -> httpx.Response:
+    def _get(target: str) -> httpx.Response:
         try:
             resp = client.get(
-                url,
+                target,
                 headers={"User-Agent": cfg.user_agent, "Accept-Language": "ko,en;q=0.8"},
                 timeout=cfg.timeout_s,
                 follow_redirects=True,
@@ -161,14 +207,45 @@ def fetch(
             raise _Retry(f"HTTP {resp.status_code}")
         return resp
 
-    try:
-        resp = _get()
-    except _Retry as exc:
-        log.warning("fetch_failed", extra={"fields": {"error": str(exc)}})
-        return FetchResult("failed", reason=str(exc))
-    if not resp.is_success:
-        return FetchResult("failed", reason=f"HTTP {resp.status_code}")
-    text = extract(decode(resp))
-    if reason := judge(text, cfg.min_chars):
-        return FetchResult("failed", text=text, reason=reason)
-    return FetchResult("ok", text=text)
+    def _page(target: str) -> tuple[str | None, str | None]:
+        try:
+            resp = _get(target)
+        except _Retry as exc:
+            log.warning("fetch_failed", extra={"fields": {"error": str(exc)}})
+            return None, str(exc)
+        if not resp.is_success:
+            return None, f"HTTP {resp.status_code}"
+        return decode(resp), None
+
+    page, error = _page(url)
+    if page is None:
+        return FetchResult("failed", reason=error)
+    detail = detail_url(url)
+    if detail is None:
+        text = extract(page)
+    else:
+        body, error = _page(detail)
+        if body is None:
+            return FetchResult("failed", reason=f"본문 페이지 {error}")
+        text = "\n\n".join(p for p in (og_summary(page), extract(body)) if p)
+    reason = judge(text, cfg.min_chars)
+    if reason is None:
+        return FetchResult("ok", text=text)
+    if detail and reason == "본문이 너무 짧음" and (urls := image_urls(body, detail)):
+        images = []
+        for src in urls[:MAX_IMAGES]:
+            try:
+                resp = _get(src)
+            except _Retry:
+                continue
+            kind = resp.headers.get("content-type", "")
+            if (
+                resp.is_success
+                and kind.startswith("image/")
+                and len(resp.content) <= MAX_IMAGE_BYTES
+            ):
+                images.append(resp.content)
+        if images:
+            return FetchResult("images", text=text, reason="본문이 이미지로 게시됨", images=images)
+        reason = f"본문 이미지를 받지 못함 (이미지 {len(urls)}개)"
+    return FetchResult("failed", text=text, reason=reason)

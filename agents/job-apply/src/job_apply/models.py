@@ -28,7 +28,7 @@ class _Model(BaseModel):
 
 
 class FetchInfo(_Model):
-    status: Literal["ok", "failed", "skipped"]
+    status: Literal["ok", "images", "failed", "skipped"]
     reason: str | None = None
 
 

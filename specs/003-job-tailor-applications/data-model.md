@@ -55,7 +55,7 @@ new / body_provided ──(중복이라 건너뜀: 기존 폴더 답글 + ✅)�
 | `url` | 원문 링크(없을 수 있음) |
 | `url_key` | 중복 판정 키(research R10) |
 | `raw_text` | 가져온 본문 또는 사용자가 붙인 본문 |
-| `fetch` | `{status: ok \| failed \| skipped, reason?}`. `skipped`는 본문을 직접 받은 경우다 |
+| `fetch` | `{status: ok \| images \| failed \| skipped, reason?}`. `skipped`는 본문을 직접 받은 경우, `images`는 본문이 이미지라 세션이 읽어 옮겨 적는 경우다 |
 | `company`, `role` | 세션이 추출한다. 못 찾으면 사용자에게 받는다 |
 | `deadline` | `YYYY-MM-DD` 또는 `null`(상시·미상) |
 | `expired` | `deadline < 오늘(KST)` |

@@ -54,11 +54,15 @@ JOB_RESULT {"items": [{"id": "1729990000.123456", "posted_at": "...", "url": "..
 
 회사·직무·마감일은 CLI가 채우지 않는다. 세션이 `text_path`를 읽어 추출한다.
 
+본문이 이미지뿐이면(사람인·잡코리아의 상세 페이지에 글자가 거의 없고 `<img>`만 있을 때) `"fetch": "images"`이고, ❓와 본문 요청을 남기지 않는다. 이미지는 `.job-state/inbox/<id>/NN-k.png`에 세로 1300px 이하 조각으로 저장되고 `items[].images`에 경로가 담긴다. 세션이 이미지를 읽어 본문을 `text_path`에 옮겨 적는다. 이미지를 하나도 받지 못하면 가져오기 실패로 처리한다.
+
 ## `job fetch (<url> | --text-file <path>)`
 
 `/tailor`용이다. id가 `t-<hash>`인 Posting을 만든다. 가져오기에 실패하면 exit 0으로 끝나고 `"fetch": "failed"`를 돌려준다. 그러면 세션이 사용자에게 본문을 요청한다.
 
-`JOB_RESULT {"id": "t-…", "fetch": "ok|failed", "reason": "...", "duplicate_of": null, "text_path": "..."}`
+`JOB_RESULT {"id": "t-…", "fetch": "ok|images|failed", "reason": "...", "duplicate_of": null, "text_path": "...", "images": ["..."]}`
+
+`images`의 뜻은 `job inbox`와 같다.
 
 ## `job init <id> --company <s> --role <s> [--deadline YYYY-MM-DD] [--new]`
 

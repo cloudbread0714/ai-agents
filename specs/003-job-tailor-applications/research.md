@@ -102,6 +102,8 @@
     - 추출한 본문이 400자 미만
     - 로그인·차단 페이지 신호("로그인", "login", "access denied" 등)가 본문의 대부분을 차지함
   - 일부 채용 사이트처럼 본문이 JSON(`__NEXT_DATA__`, `application/ld+json`의 `JobPosting`)에 들어 있으면, trafilatura 전에 이것을 먼저 시도한다.
+  - 사람인(`rec_idx`)과 잡코리아(`GI_Read/<번호>`)는 공고 페이지가 껍데기라서 본문 페이지(`view-detail`, `GI_Read_Comt_Ifrm`)를 따로 받고, 원래 페이지의 og 제목·설명을 앞에 붙인다.
+  - 본문 페이지가 거의 이미지뿐이면 실패 대신 `images`로 이미지를 내려받는다(최대 12장, 장당 15MB). 글자 읽기는 세션이 이미지를 직접 보고 한다. CLI에 OCR을 넣지 않는다.
 - **Rationale**: 사이트별 파서를 늘리지 않고 흔한 두 방식만 지원한다. 그 밖은 사용자가 본문을 붙이는 흐름으로 처리한다.
 - **Alternatives considered**:
   - 헤드리스 브라우저(Playwright): 설치가 무겁고 로그인 벽은 어차피 못 넘는다.

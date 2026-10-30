@@ -12,7 +12,8 @@ argument-hint: [개수]
 
 1. `agents/job-apply/bin/job doctor` 를 실행한다. `slack_ready` 가 false이거나 `missing` 이 있으면 무엇이 빠졌는지 알리고 멈춘다.
 2. `agents/job-apply/bin/job inbox [--limit <개수>]` 를 실행한다.
-3. 각 `items[].text_path` 를 읽고 회사·직무·마감일(YYYY-MM-DD, 없으면 상시)을 추출한다. 찾지 못한 값은 "미상"으로 둔다.
+3. `fetch` 가 `images` 인 항목은 `/tailor` 의 3-1단계를 그대로 한다(이미지를 모두 열어 본문을 `text_path` 에 옮겨 적기).
+   그다음 각 `items[].text_path` 를 읽고 회사·직무·마감일(YYYY-MM-DD, 없으면 상시)을 추출한다. 찾지 못한 값은 "미상"으로 둔다.
 4. **처리 전 목록**을 아래 형식으로 보여 주고 확인을 받는다. 사용자가 확인하기 전에는 아무 공고도 처리하지 않는다.
    - 회사·직무가 "미상"인 공고의 이름을 묻는다.
    - 마감이 지난 공고: 이번만 건너뛰기 / 건너뛰고 ✅로 정리 / 처리
