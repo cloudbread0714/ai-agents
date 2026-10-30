@@ -233,8 +233,14 @@ def cmd_fetch(ctx: Ctx, args) -> tuple[int, dict[str, Any]]:
         res = fetch_mod.fetch(url, ctx.cfg.fetch, ctx.http, base_delay=ctx.base_delay)
         text, got = res.text, FetchInfo(status=res.status, reason=res.reason)
     done = dedup.find_done(ctx.paths.applications, key)
+    posting_id = _direct_id(key)
+    image_paths: list[str] = []
+    if got.status == "images":
+        image_paths = inbox.save_images(ctx.paths, posting_id, res.images)
+        if not image_paths:
+            got = FetchInfo(status="failed", reason="본문 이미지를 열지 못함")
     posting = Posting(
-        id=_direct_id(key),
+        id=posting_id,
         origin="direct",
         url=url,
         url_key=key,
@@ -244,6 +250,8 @@ def cmd_fetch(ctx: Ctx, args) -> tuple[int, dict[str, Any]]:
     text_path = inbox.save_posting(ctx.paths, posting, text)
     if got.status == "failed":
         ctx.say(f"공고를 가져오지 못했어요: {got.reason}")
+    elif got.status == "images":
+        ctx.say(f"공고 본문이 이미지예요. {len(image_paths)}장으로 저장했어요")
     else:
         ctx.say(f"공고 본문을 저장했어요: {ctx.paths.rel(text_path)}")
     return 0, {
@@ -252,6 +260,7 @@ def cmd_fetch(ctx: Ctx, args) -> tuple[int, dict[str, Any]]:
         "reason": got.reason,
         "duplicate_of": posting.duplicate_of,
         "text_path": ctx.paths.rel(text_path),
+        "images": image_paths,
     }
 
 

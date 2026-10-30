@@ -7,6 +7,15 @@ from ja_support.samples import make_posting_html, posting_text
 LINK = "https://jobs.example.com/p/{}"
 
 
+def _png_bytes() -> bytes:
+    import pymupdf
+
+    return pymupdf.Pixmap(pymupdf.csRGB, pymupdf.IRect(0, 0, 4, 4), False).tobytes("png")
+
+
+_PNG = _png_bytes()
+
+
 def _channel(httpx_mock):
     slack = install(httpx_mock, FakeSlack())
     slack.add(
@@ -80,6 +89,21 @@ def test_fetch_failure_asks_for_body_and_keeps_going(job, httpx_mock):
     assert reply["thread_ts"] == "1000.000002" and "(사유: HTTP 403)" in reply["text"]
 
 
+def test_image_body_is_kept_for_the_session(job, httpx_mock, monkeypatch):
+    from job_apply import fetch as fetch_mod
+
+    slack = _channel(httpx_mock)
+    got = fetch_mod.FetchResult(
+        "images", text="제목", reason="본문이 이미지로 게시됨", images=[_PNG]
+    )
+    monkeypatch.setattr(fetch_mod, "fetch", lambda *a, **k: got)
+    _code, res, _ = job("inbox", "--limit", "1")
+    [item] = res["items"]
+    assert (item["id"], item["fetch"]) == ("1000.000002", "images")
+    assert item["images"] == ["agents/job-apply/.job-state/inbox/1000.000002/01-1.png"]
+    assert not slack.calls_of("reactions.add") and not slack.calls_of("chat.postMessage")
+
+
 def test_limit_is_not_refilled_after_a_failure(job, httpx_mock):
     _channel(httpx_mock)
     httpx_mock.add_response(url=LINK.format(2), status_code=403)
@@ -116,3 +140,13 @@ def test_needs_token_and_channel(job):
     job.environ = {}
     code, res, out = job("inbox")
     assert code == 5 and "SLACK_BOT_TOKEN" in out
+
+
+def test_slack_escaped_ampersands_are_unescaped():
+    from job_apply.inbox import unwrap
+
+    text, urls = unwrap(
+        "보자 &lt;신입&gt; <https://x.example/v?a=1&amp;b=2|공고> https://y.example/?c=3&amp;d=4"
+    )
+    assert urls == ["https://x.example/v?a=1&b=2", "https://y.example/?c=3&d=4"]
+    assert text == "보자 <신입> https://x.example/v?a=1&b=2 https://y.example/?c=3&d=4"
