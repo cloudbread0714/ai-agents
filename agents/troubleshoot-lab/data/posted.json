@@ -8,7 +8,13 @@
       "main_kind": "mission",
       "main_id": "concept-web-request-flow",
       "second_id": null,
-      "posted_at": "2026-10-26T01:41:47.167747Z"
+      "posted_at": "2026-10-26T01:41:47.167747Z",
+      "channel": null,
+      "ts": null,
+      "outcome": null,
+      "resolved_at": null,
+      "reminders": [],
+      "reposted_at": null
     },
     {
       "date_kst": "2026-10-27",
@@ -17,7 +23,13 @@
       "main_kind": "scenario",
       "main_id": "site-connection-refused",
       "second_id": null,
-      "posted_at": "2026-10-27T02:24:59.706461Z"
+      "posted_at": "2026-10-27T02:24:59.706461Z",
+      "channel": null,
+      "ts": null,
+      "outcome": null,
+      "resolved_at": null,
+      "reminders": [],
+      "reposted_at": null
     },
     {
       "date_kst": "2026-10-28",
@@ -26,7 +38,13 @@
       "main_kind": "scenario",
       "main_id": "api-partial-errors",
       "second_id": null,
-      "posted_at": "2026-10-28T02:34:57.783564Z"
+      "posted_at": "2026-10-28T02:34:57.783564Z",
+      "channel": null,
+      "ts": null,
+      "outcome": null,
+      "resolved_at": null,
+      "reminders": [],
+      "reposted_at": null
     },
     {
       "date_kst": "2026-10-29",
@@ -35,7 +53,28 @@
       "main_kind": "scenario",
       "main_id": "site-hangs",
       "second_id": null,
-      "posted_at": "2026-10-29T02:51:11.758869Z"
+      "posted_at": "2026-10-29T02:51:11.758869Z",
+      "channel": null,
+      "ts": null,
+      "outcome": null,
+      "resolved_at": null,
+      "reminders": [],
+      "reposted_at": null
+    },
+    {
+      "date_kst": "2026-10-30",
+      "kind": "day",
+      "day": 5,
+      "main_kind": "scenario",
+      "main_id": "api-unreachable-via-proxy",
+      "second_id": null,
+      "posted_at": "2026-10-30T02:56:34.539314Z",
+      "channel": "C0CCPB0903A",
+      "ts": "1793328994.920759",
+      "outcome": "open",
+      "resolved_at": null,
+      "reminders": [],
+      "reposted_at": null
     }
   ],
   "weekly": []
