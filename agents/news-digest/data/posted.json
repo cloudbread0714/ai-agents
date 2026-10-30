@@ -50,6 +50,16 @@
       "source": "AWS Machine Learning Blog",
       "posted_at": "2026-10-29T01:56:01.264524Z",
       "posted_date_kst": "2026-10-29"
+    },
+    {
+      "article_id": "1dda19717c518d48",
+      "url": "https://aws.amazon.com/blogs/machine-learning/how-moengage-turned-over-400-apis-into-agent-tools-with-agentcore-gateway",
+      "title": "How MoEngage turned over 400 APIs into agent tools with AgentCore Gateway",
+      "title_ko": "MoEngage, 400여 개 내부 API를 AgentCore Gateway로 에이전트 도구화한 사례",
+      "category": "ai_agent",
+      "source": "AWS Machine Learning Blog",
+      "posted_at": "2026-10-30T02:07:45.275441Z",
+      "posted_date_kst": "2026-10-30"
     }
   ]
 }
