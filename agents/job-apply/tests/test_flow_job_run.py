@@ -25,7 +25,6 @@ def _process(job, item_id, company, role):
     assert code == 0, out
     folder = job.root.parents[1] / res["folder"]
     session.write(folder)
-    assert job("resume-pdf", str(folder))[0] == 0
     assert job("apply", str(folder))[0] == 0
     return folder
 

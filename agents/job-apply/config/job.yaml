@@ -3,16 +3,6 @@ slack:
   # #job-apply channel ID (not a secret). SLACK_JOB_CHANNEL_ID in the environment wins.
   channel_id: ""
 
-resume:
-  # First existing file is embedded; none → PyMuPDF's built-in CJK font.
-  font_files:
-    - ~/Library/Fonts/Pretendard-Regular.otf
-    - /Library/Fonts/Pretendard-Regular.otf
-    - ~/Library/Fonts/NotoSansKR-Regular.otf
-    - /Library/Fonts/NotoSansKR-Regular.otf
-    - /usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc
-    - /System/Library/Fonts/AppleSDGothicNeo.ttc
-
 fetch:
   timeout_s: 15
   min_chars: 400
@@ -23,3 +13,10 @@ render:
   max_attempts: 3
   overflow_tolerance_pt: 4
   preview_dpi: 150
+  # Fonts named in resume.docx / portfolio.pptx that are not installed here → what to draw
+  # instead. A pair always applies, so remove it once the original font is installed.
+  # AppleGothic keeps a 맑은 고딕 resume at its original page count; Apple SD Gothic Neo
+  # runs wider. job doctor reports the remaining missing fonts.
+  font_substitutes:
+    맑은 고딕: AppleGothic
+    Malgun Gothic: AppleGothic

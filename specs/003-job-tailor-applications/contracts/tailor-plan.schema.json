@@ -1,9 +1,13 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "job-apply/tailor-plan/1",
+  "$id": "job-apply/tailor-plan/2",
   "title": "TailorPlan (applications/<folder>/tailor.json)",
   "type": "object",
-  "required": ["schema", "resume", "portfolio"],
+  "required": [
+    "schema",
+    "resume",
+    "portfolio"
+  ],
   "additionalProperties": false,
   "$defs": {
     "source": {
@@ -11,42 +15,139 @@
       "type": "string",
       "pattern": "^(resume\\.txt:L\\d+(-\\d+)?|portfolio\\.json:s\\d+/sh\\d+(/p\\d+)?)(, *(resume\\.txt:L\\d+(-\\d+)?|portfolio\\.json:s\\d+/sh\\d+(/p\\d+)?))*$"
     },
-    "reason": { "type": "string", "minLength": 5 }
+    "reason": {
+      "type": "string",
+      "minLength": 5
+    },
+    "op": {
+      "type": "object",
+      "required": [
+        "kind"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "insert_after",
+            "delete"
+          ]
+        },
+        "text": {
+          "type": "string",
+          "description": "insert_after일 때 새 문단 텍스트"
+        }
+      }
+    }
   },
   "properties": {
-    "schema": { "const": 1 },
+    "schema": {
+      "const": 2
+    },
     "acknowledged_warnings": {
       "description": "verify 근거 검사 경고 중 실제 원본 근거가 있는 항목의 해명. 해명되지 않은 경고가 남으면 complete가 exit 9",
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["file", "token", "source", "reason"],
+        "required": [
+          "file",
+          "token",
+          "source",
+          "reason"
+        ],
         "additionalProperties": false,
         "properties": {
-          "file": { "enum": ["resume.md", "portfolio.pptx"] },
-          "token": { "type": "string", "minLength": 1 },
-          "source": { "$ref": "#/$defs/source" },
-          "reason": { "$ref": "#/$defs/reason" }
+          "file": {
+            "enum": [
+              "resume.docx",
+              "portfolio.pptx"
+            ]
+          },
+          "token": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source": {
+            "$ref": "#/$defs/source"
+          },
+          "reason": {
+            "$ref": "#/$defs/reason"
+          }
         }
       }
     },
     "resume": {
       "type": "object",
-      "required": ["changes"],
+      "required": [
+        "edits"
+      ],
       "additionalProperties": false,
       "properties": {
-        "changes": {
+        "edits": {
           "type": "array",
           "items": {
             "type": "object",
-            "required": ["section", "after", "source", "reason"],
+            "required": [
+              "paragraph",
+              "source",
+              "reason"
+            ],
             "additionalProperties": false,
+            "description": "paragraph는 base/resume.json 기준 문단 번호(0부터). text / runs / op 중 정확히 하나(CLI가 검사)",
             "properties": {
-              "section": { "type": "string", "minLength": 1 },
-              "before": { "type": "string" },
-              "after": { "type": "string" },
-              "source": { "$ref": "#/$defs/source" },
-              "reason": { "$ref": "#/$defs/reason" }
+              "paragraph": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "text": {
+                "type": "string",
+                "description": "줄 바꿈(\\n)은 같은 문단 안의 줄 바꿈이 된다"
+              },
+              "runs": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "minItems": 1
+              },
+              "op": {
+                "$ref": "#/$defs/op"
+              },
+              "source": {
+                "$ref": "#/$defs/source"
+              },
+              "reason": {
+                "$ref": "#/$defs/reason"
+              }
+            }
+          }
+        },
+        "row_order": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "table",
+              "order",
+              "reason"
+            ],
+            "additionalProperties": false,
+            "description": "표 하나의 행 순서. order는 base 행 번호(0부터)의 순열(CLI가 검사). 머리글 행도 포함한다",
+            "properties": {
+              "table": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "order": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "minItems": 1
+              },
+              "reason": {
+                "$ref": "#/$defs/reason"
+              }
             }
           }
         }
@@ -54,40 +155,69 @@
     },
     "portfolio": {
       "type": "object",
-      "required": ["slide_order", "edits"],
+      "required": [
+        "slide_order",
+        "edits"
+      ],
       "additionalProperties": false,
       "properties": {
         "slide_order": {
           "description": "base 기준 슬라이드 번호(1부터)의 순열. 길이는 slide_count와 같고 중복 없음(CLI가 검사)",
           "type": "array",
-          "items": { "type": "integer", "minimum": 1 },
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          },
           "minItems": 1
         },
-        "order_reason": { "type": "string" },
+        "order_reason": {
+          "type": "string"
+        },
         "edits": {
           "type": "array",
           "items": {
             "type": "object",
-            "required": ["slide", "shape_id", "paragraph", "source", "reason"],
+            "required": [
+              "slide",
+              "shape_id",
+              "paragraph",
+              "source",
+              "reason"
+            ],
             "additionalProperties": false,
             "description": "slide·paragraph는 base 기준. text / runs / op 중 정확히 하나(CLI가 검사)",
             "properties": {
-              "slide": { "type": "integer", "minimum": 1 },
-              "shape_id": { "type": "integer", "minimum": 0 },
-              "paragraph": { "type": "integer", "minimum": 0 },
-              "text": { "type": "string" },
-              "runs": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
-              "op": {
-                "type": "object",
-                "required": ["kind"],
-                "additionalProperties": false,
-                "properties": {
-                  "kind": { "enum": ["insert_after", "delete"] },
-                  "text": { "type": "string", "description": "insert_after일 때 새 문단 텍스트" }
-                }
+              "slide": {
+                "type": "integer",
+                "minimum": 1
               },
-              "source": { "$ref": "#/$defs/source" },
-              "reason": { "$ref": "#/$defs/reason" }
+              "shape_id": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "paragraph": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "text": {
+                "type": "string"
+              },
+              "runs": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "minItems": 1
+              },
+              "op": {
+                "$ref": "#/$defs/op"
+              },
+              "source": {
+                "$ref": "#/$defs/source"
+              },
+              "reason": {
+                "$ref": "#/$defs/reason"
+              }
             }
           }
         }

@@ -26,13 +26,14 @@ from job_apply import (
     dedup,
     design_guard,
     doctor,
+    docx_doc,
+    docx_guard,
     folders,
     inbox,
     layout_check,
     pptx_apply,
     pptx_dump,
     report,
-    resume_pdf,
     sources,
     verify,
 )
@@ -47,7 +48,7 @@ from job_apply.errors import (
     UsageError,
 )
 from job_apply.models import FetchInfo, Meta, MetaError, Posting, PostingRef, RenderIssue, load_plan
-from job_apply.render import Renderer, SofficeRenderer, render_previews
+from job_apply.render import Renderer, SofficeRenderer, page_count, render_previews
 from shared.logging import JsonFormatter, SecretMaskingFilter, get_logger
 from shared.slack import SlackApiError, add_reaction, post_message, upload_files
 
@@ -88,6 +89,7 @@ class Ctx:
             self.renderer = SofficeRenderer(
                 self.paths.lo_profile,
                 timeout_s=self.cfg.render.timeout_s,
+                font_substitutes=self.cfg.render.font_substitutes,
                 run=self.run,
                 which=self.which,
             )
@@ -118,15 +120,16 @@ def _parser() -> argparse.ArgumentParser:
     it.add_argument("--deadline", type=date.fromisoformat)
     it.add_argument("--new", action="store_true")
     for name, help_ in (
-        ("apply", "tailor.json 포트폴리오 적용과 렌더링 점검"),
-        ("resume-pdf", "resume.md → resume.pdf"),
+        ("apply", "tailor.json 이력서·포트폴리오 적용과 렌더링 점검"),
         ("verify", "산출물·형식·근거 검사"),
         ("complete", "완료 처리(Slack 공고면 답글·PDF·✅)"),
     ):
         sub.add_parser(name, help=help_).add_argument("folder")
     ni = sub.add_parser("note-issue", help="미리보기에서 찾은 문제 기록")
     ni.add_argument("folder")
-    ni.add_argument("--slide", type=int, required=True)
+    where = ni.add_mutually_exclusive_group(required=True)
+    where.add_argument("--slide", type=int, help="포트폴리오 슬라이드 번호")
+    where.add_argument("--page", type=int, help="이력서 쪽 번호")
     ni.add_argument("--detail", required=True)
     sk = sub.add_parser("skip", help="중복·마감 공고 건너뛰기")
     sk.add_argument("id")
@@ -325,11 +328,14 @@ def cmd_init(ctx: Ctx, args) -> tuple[int, dict[str, Any]]:
     # Written before the slow steps, so a failure below (exit 8 included) can mark it failed.
     folders.write_meta(folder, meta)
 
-    sources.extract_resume_text(base / "resume.pdf", base / "resume.txt")
+    dpi = ctx.cfg.render.preview_dpi
+    docx_doc.dump_file(base / "resume.docx", base / "resume.json", base / "resume.txt")
+    resume = ctx.render().to_pdf(base / "resume.docx", base / "render")
+    render_previews(resume, range(1, page_count(resume) + 1), base / "render", dpi, "resume")
     pptx_dump.dump_file(base / "portfolio.pptx", base / "portfolio.json")
     pdf = ctx.render().to_pdf(base / "portfolio.pptx", base / "render")
     slide_count = _base_dump(folder)["slide_count"]
-    render_previews(pdf, range(1, slide_count + 1), base / "render", ctx.cfg.render.preview_dpi)
+    render_previews(pdf, range(1, slide_count + 1), base / "render", dpi)
 
     posting.company, posting.role, posting.deadline = args.company, args.role, args.deadline
     inbox.save_posting(paths, posting, text)
@@ -341,21 +347,6 @@ def cmd_init(ctx: Ctx, args) -> tuple[int, dict[str, Any]]:
     return 0, {"folder": rel, "reused": reused}
 
 
-def cmd_resume_pdf(ctx: Ctx, args) -> tuple[int, dict[str, Any]]:
-    folder = _folder(ctx, args.folder)
-    _meta(folder)
-    if not (folder / "resume.md").is_file():
-        raise UsageError("resume.md가 없어요")
-    resume_pdf.build(
-        folder / "resume.md",
-        folder / "resume.pdf",
-        ctx.paths.templates / "resume.css",
-        ctx.cfg.font_file(),
-    )
-    ctx.say("resume.pdf를 만들었어요")
-    return 0, {"resume_pdf": ctx.paths.rel(folder / "resume.pdf")}
-
-
 def cmd_apply(ctx: Ctx, args) -> tuple[int, dict[str, Any]]:
     folder = _folder(ctx, args.folder)
     meta = _meta(folder)
@@ -363,13 +354,33 @@ def cmd_apply(ctx: Ctx, args) -> tuple[int, dict[str, Any]]:
     if meta.render.attempts >= limit:
         raise UsageError(f"렌더링 점검은 최대 {limit}회예요. 남은 문제는 note-issue로 기록하세요")
     base = folder / "base"
+    dpi = ctx.cfg.render.preview_dpi
     plan = load_plan(folder / "tailor.json", _base_dump(folder)["slide_count"])
+    resume_data = docx_doc.apply(base / "resume.docx", plan)
+    docx_guard.check(base / "resume.docx", resume_data)
     data = pptx_apply.apply(base / "portfolio.pptx", plan)
     design_guard.check(base / "portfolio.pptx", data)
+    (folder / "resume.docx").write_bytes(resume_data)
     (folder / "portfolio.pptx").write_bytes(data)
+    resume = ctx.render().to_pdf(folder / "resume.docx", folder)
+    pages = page_count(resume)
+    previews = render_previews(resume, range(1, pages + 1), folder / "preview", dpi, "resume")
+    base_pages = page_count(base / "render" / "resume.pdf")
+    resume_issues = (
+        [
+            RenderIssue(
+                file="resume",
+                slide=pages,
+                kind="overflow",
+                detail=f"원본 {base_pages}쪽보다 길어짐({pages}쪽)",
+            )
+        ]
+        if pages > base_pages
+        else []
+    )
     pdf = ctx.render().to_pdf(folder / "portfolio.pptx", folder)
     changed = pptx_apply.edited_slides(plan)
-    previews = render_previews(pdf, changed, folder / "preview", ctx.cfg.render.preview_dpi)
+    previews += render_previews(pdf, changed, folder / "preview", dpi)
     tol = ctx.cfg.render.overflow_tolerance_pt
     base_issues = layout_check.find_issues(
         base / "portfolio.pptx", base / "render" / "portfolio.pdf", tol
@@ -377,14 +388,16 @@ def cmd_apply(ctx: Ctx, args) -> tuple[int, dict[str, Any]]:
     found = layout_check.find_issues(folder / "portfolio.pptx", pdf, tol)
     new = layout_check.new_issues(found, base_issues, plan.portfolio.slide_order)
     kept_visual = [
-        i for i in meta.render.remaining_issues if i.kind == "visual" and i.slide not in changed
+        i
+        for i in meta.render.remaining_issues
+        if i.kind == "visual" and i.file == "portfolio" and i.slide not in changed
     ]
     meta.render.attempts += 1
-    meta.render.remaining_issues = new + kept_visual
+    meta.render.remaining_issues = resume_issues + new + kept_visual
     folders.write_meta(folder, meta)
     changes.write(folder, meta, plan, None, limit)
     issues = meta.render.remaining_issues
-    ctx.say(f"포트폴리오 적용 {meta.render.attempts}/{limit}회째")
+    ctx.say(f"이력서·포트폴리오 적용 {meta.render.attempts}/{limit}회째")
     ctx.say(*(f"- {changes.issue_text(i)}" for i in issues) or ["렌더링 문제 없음"])
     if previews:
         ctx.say("미리보기: " + ", ".join(ctx.paths.rel(p) for p in previews))
@@ -398,12 +411,12 @@ def cmd_apply(ctx: Ctx, args) -> tuple[int, dict[str, Any]]:
 def cmd_note_issue(ctx: Ctx, args) -> tuple[int, dict[str, Any]]:
     folder = _folder(ctx, args.folder)
     meta = _meta(folder)
-    meta.render.remaining_issues.append(
-        RenderIssue(slide=args.slide, kind="visual", detail=args.detail)
-    )
+    file, number = ("resume", args.page) if args.page is not None else ("portfolio", args.slide)
+    issue = RenderIssue(file=file, slide=number, kind="visual", detail=args.detail)
+    meta.render.remaining_issues.append(issue)
     folders.write_meta(folder, meta)
     changes.write(folder, meta, _plan_or_none(folder), None, ctx.cfg.render.max_attempts)
-    ctx.say(f"슬라이드 {args.slide} 문제를 기록했어요")
+    ctx.say(f"{changes.issue_place(issue)} 문제를 기록했어요")
     return 0, {"issues": len(meta.render.remaining_issues)}
 
 
@@ -579,7 +592,6 @@ COMMANDS = {
     "inbox": cmd_inbox,
     "fetch": cmd_fetch,
     "init": cmd_init,
-    "resume-pdf": cmd_resume_pdf,
     "apply": cmd_apply,
     "note-issue": cmd_note_issue,
     "verify": cmd_verify,

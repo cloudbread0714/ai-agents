@@ -25,10 +25,9 @@ CLI는 결정적인 단계만 맡는다. 판단(추출·분석·작성)은 슬�
 ## `job doctor`
 
 다음을 확인하고 항목별로 ✅/❌를 출력한다.
-- 원본 두 파일이 있고 열린다(PDF 텍스트 추출 가능, PPTX 열림).
+- 원본 두 파일(`private/resume.docx`, `private/portfolio.pptx`)이 있고 열린다.
 - `soffice`가 있다.
-- PPTX가 쓰는 글꼴이 설치돼 있다(없는 글꼴은 경고만).
-- 이력서 글꼴 파일이 있다(없으면 경고만 하고 PyMuPDF 내장 CJK 글꼴을 쓴다).
+- DOCX·PPTX가 쓰는 글꼴이 설치돼 있거나 `render.font_substitutes`의 대체 글꼴이 설치돼 있다(없는 글꼴은 경고만).
 - `private/`, `applications/`, `.job-state/`가 git에서 무시된다.
 - `/job-run`용으로 `SLACK_BOT_TOKEN`과 채널 설정이 있고, `auth.test`와 `conversations.history`(limit=1) 호출이 성공한다.
   실패하면 `slack_ready=false`이고 경고만 한다(`/tailor`는 가능).
@@ -69,13 +68,20 @@ JOB_RESULT {"items": [{"id": "1729990000.123456", "posted_at": "...", "url": "..
 - 중복(`duplicate_of`)이 있는데 `--new`가 없으면 exit 6이다.
 - 같은 posting의 `failed`/`in_progress` 폴더가 있으면 그 폴더를 다시 쓴다.
 - 폴더를 만들고 다음을 준비한다.
-  - `base/`에 원본을 복사한다.
-  - `resume.txt`(텍스트 추출)를 만든다. 줄 번호가 근거 위치로 쓰인다.
+  - `base/`에 원본(`resume.docx`, `portfolio.pptx`)을 복사한다.
+  - `resume.json`(이력서 문단 구조 덤프)과 `resume.txt`(빈 문단을 뺀 문단마다 한 줄)를 만든다. `resume.txt` 줄 번호가 근거 위치로 쓰인다.
   - `portfolio.json`(텍스트 구조 덤프)을 만든다.
-  - `base/render/`(base 렌더링 PDF와 전체 슬라이드 PNG)를 만든다.
+  - `base/render/`(base 렌더링 PDF 2개, 이력서 전체 쪽 `resume-NN.png`, 전체 슬라이드 `slide-NN.png`)를 만든다.
   - `job.md` 머리말(원문 링크, 원문 본문)과 `meta.json`(`in_progress`)을 쓴다.
 
 `JOB_RESULT {"folder": "agents/job-apply/applications/2026-10-27_예시회사_백엔드-개발자", "reused": false}`
+
+**resume.json 형식** (세션이 이력서 편집 계획을 세울 때 보는 DOCX 정보). 문단은 문서 순서로 0부터 번호를 매기고, 표·행·칸 안으로 들어간다. 표는 만나는 순서로 1부터 센다. `line`은 그 문단이 `resume.txt`의 몇째 줄인지다(빈 문단에는 없음).
+
+```json
+{"paragraph_count": 110, "tables": [{"table": 3, "rows": 5}],
+ "paragraphs": [{"paragraph": 40, "table": 3, "row": 1, "cell": 2, "text": "…", "runs": ["…"], "line": 31}]}
+```
 
 **portfolio.json 형식** (세션이 편집 계획을 세울 때 보는 유일한 PPTX 정보):
 
@@ -87,28 +93,24 @@ JOB_RESULT {"items": [{"id": "1729990000.123456", "posted_at": "...", "url": "..
 
 ## `job apply <folder>`
 
-`tailor.json`의 `portfolio` 부분을 base 사본에 적용한다.
+`tailor.json`의 `resume`과 `portfolio`를 base 사본에 적용한다.
 
-1. 스키마와 `source`를 검사한다(실패하면 exit 2).
-2. 적용한 뒤 디자인 보존 검사를 한다(research R3). 실패하면 exit 4, 결과물은 쓰지 않는다.
-3. `portfolio.pptx`를 쓰고, LibreOffice로 `portfolio.pdf`를 만든다(LibreOffice가 없으면 exit 5).
-4. 바뀐 슬라이드(문구 변경이 있는 슬라이드)의 PNG를 `preview/`에 만든다. 이전 미리보기는 지운다.
-5. 넘침·겹침을 검출하고 base에 있던 문제는 뺀다(research R6).
+1. 스키마와 `source`를 검사한다(실패하면 exit 2). 없는 문단·표, 순열이 아닌 행 순서도 exit 2다.
+2. 둘 다 적용한 뒤 디자인 보존 검사를 한다(이력서 research R7, 포트폴리오 R3). 하나라도 실패하면 exit 4, 결과물은 쓰지 않는다.
+3. `resume.docx`, `portfolio.pptx`를 쓰고, LibreOffice로 `resume.pdf`, `portfolio.pdf`를 만든다(LibreOffice가 없으면 exit 5).
+4. 이력서 전체 쪽(`resume-NN.png`)과 바뀐 슬라이드(`slide-NN.png`)의 PNG를 `preview/`에 만든다. 이전 미리보기는 지운다.
+5. 이력서가 base보다 쪽수가 늘면 `overflow` 문제로 기록한다. 포트폴리오는 넘침·겹침을 검출하고 base에 있던 문제는 뺀다(research R6).
 6. `meta.render.attempts += 1`. 남은 문제를 기록하고 `changes.md`를 다시 만든다.
 
-이력서 부분은 건드리지 않는다(`resume-pdf` 담당). 다만 `changes.md`의 이력서 표는 tailor.json에서 함께 만든다.
+`JOB_RESULT {"attempt": 2, "issues": [{"file": "portfolio", "slide": 4, "shape_id": 7, "kind": "overflow", "detail": "+18pt"}], "previews": ["preview/resume-01.png", "preview/slide-04.png"]}`
 
-`JOB_RESULT {"attempt": 2, "issues": [{"slide": 4, "shape_id": 7, "kind": "overflow", "detail": "+18pt"}], "previews": ["preview/slide-04.png"]}`
+`issues[].file`이 `resume`이면 `slide`는 이력서 쪽 번호다.
 
 문제가 남아 있으면 exit 3. `attempt`가 3이면 세션은 더 고치지 않고 다음 단계로 간다.
 
-## `job note-issue <folder> --slide N --detail "<text>"`
+## `job note-issue <folder> (--slide N | --page N) --detail "<text>"`
 
-세션이 미리보기 이미지에서 찾은 문제(`visual`)를 기록한다. `apply`를 다시 실행하면 그 슬라이드의 `visual` 기록은 지워진다(세션이 다시 보고 남은 것만 다시 기록한다).
-
-## `job resume-pdf <folder>`
-
-`resume.md`를 `resume.pdf`로 만든다(research R7). frontmatter는 허용하지 않는다.
+세션이 미리보기 이미지에서 찾은 문제(`visual`)를 기록한다. 포트폴리오는 `--slide`, 이력서는 `--page`다. `apply`를 다시 실행하면 이력서의 `visual` 기록과 다시 적용한 슬라이드의 `visual` 기록은 지워진다(세션이 다시 보고 남은 것만 다시 기록한다).
 
 ## `job verify <folder>`
 
@@ -118,7 +120,7 @@ JOB_RESULT {"items": [{"id": "1729990000.123456", "posted_at": "...", "url": "..
 - 근거 검사 경고를 낸다([data-model §7](../data-model.md)). `tailor.json`의 `acknowledged_warnings`로 해명된 것은 `acknowledged`, 나머지는 `unresolved`로 나눈다.
   `verify` 자체는 exit 0이고, 결과를 `changes.md`에 다시 쓴다.
 
-`JOB_RESULT {"ok": true, "missing": [], "unresolved": [{"file": "resume.md", "token": "Kafka", "kind": "tech"}], "acknowledged": []}`
+`JOB_RESULT {"ok": true, "missing": [], "unresolved": [{"file": "resume.docx", "token": "Kafka", "kind": "tech"}], "acknowledged": []}`
 
 ## `job complete <folder>`
 

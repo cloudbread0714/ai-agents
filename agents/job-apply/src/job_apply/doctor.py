@@ -17,6 +17,8 @@ from shared.slack import SlackApiError, auth_test, conversations_history
 
 Run = Callable[..., subprocess.CompletedProcess]
 _TYPEFACE = re.compile(rb'<a:(?:latin|ea|cs)\b[^>]*\btypeface="([^"]+)"')
+_RFONT = re.compile(rb"<w:rFonts\b[^>]*>")
+_RFONT_NAME = re.compile(rb'\bw:(?:ascii|hAnsi|eastAsia|cs)="([^"]+)"')
 
 
 @dataclass
@@ -58,6 +60,17 @@ def pptx_fonts(pptx) -> set[str]:
     return names
 
 
+def docx_fonts(docx) -> set[str]:
+    """Fonts named directly in the document and its styles (theme fonts are skipped)."""
+    names: set[str] = set()
+    with zipfile.ZipFile(docx) as z:
+        for part in ("word/document.xml", "word/styles.xml"):
+            if part in z.namelist():
+                for tag in _RFONT.findall(z.read(part)):
+                    names |= {f.decode("utf-8", "replace") for f in _RFONT_NAME.findall(tag)}
+    return names
+
+
 def installed_fonts(run: Run, which: Callable[[str], str | None]) -> set[str] | None:
     if not which("fc-list"):
         return None
@@ -95,20 +108,23 @@ def run_checks(
     if sources_ok:
         installed = installed_fonts(run, which)
         if installed is None:
-            rep.warn("fc-list가 없어 포트폴리오 글꼴 확인을 건너뛰었어요")
+            rep.warn("fc-list가 없어 이력서·포트폴리오 글꼴 확인을 건너뛰었어요")
         else:
-            absent = sorted(f for f in pptx_fonts(paths.portfolio) if f not in installed)
-            if absent:
-                rep.warn(
-                    "포트폴리오 글꼴이 설치돼 있지 않아요(줄 바꿈이 달라질 수 있음): "
-                    + ", ".join(absent)
+            for label, fonts in (
+                ("이력서", docx_fonts(paths.resume)),
+                ("포트폴리오", pptx_fonts(paths.portfolio)),
+            ):
+                subs = cfg.render.font_substitutes
+                absent = sorted(
+                    f for f in fonts if f not in installed and subs.get(f) not in installed
                 )
-            else:
-                rep.good("포트폴리오 글꼴이 모두 설치돼 있어요")
-    if cfg.font_file():
-        rep.good(f"이력서 글꼴: {cfg.font_file().name}")
-    else:
-        rep.warn("이력서 글꼴 파일이 없어 내장 CJK 글꼴을 써요")
+                if absent:
+                    rep.warn(
+                        f"{label} 글꼴이 설치돼 있지 않아요(줄 바꿈이 달라질 수 있음): "
+                        + ", ".join(absent)
+                    )
+                else:
+                    rep.good(f"{label} 글꼴이 모두 설치돼 있어요")
 
     private = [paths.rel(p / "x") for p in (paths.private, paths.applications, paths.state)]
     proc = run(

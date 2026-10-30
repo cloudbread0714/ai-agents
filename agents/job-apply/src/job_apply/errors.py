@@ -8,7 +8,7 @@ class JobError(Exception):
 
 
 class UsageError(JobError):
-    """Bad arguments or a bad file the session wrote (tailor.json, resume.md frontmatter)."""
+    """Bad arguments or a bad file the session wrote (tailor.json)."""
 
     exit_code = 2
 

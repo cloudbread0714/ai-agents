@@ -10,7 +10,7 @@ def test_real_config_loads():
 
     cfg = load_config(Paths(AGENT_ROOT))
     assert cfg.render.max_attempts == 3 and cfg.fetch.min_chars == 400
-    assert cfg.resume.font_files
+    assert cfg.render.font_substitutes["맑은 고딕"]
 
 
 def test_secret_looking_keys_are_rejected(tmp_path):
@@ -32,11 +32,3 @@ def test_channel_from_env_or_config():
     assert slack_channel(cfg, {"SLACK_JOB_CHANNEL_ID": "C0ENV"}) == "C0ENV"
     with pytest.raises(EnvNotReady):
         slack_channel(JobConfig(), {})
-
-
-def test_font_file_first_existing(tmp_path):
-    font = tmp_path / "b.ttf"
-    font.write_bytes(b"x")
-    cfg = JobConfig.model_validate({"resume": {"font_files": [str(tmp_path / "a.ttf"), str(font)]}})
-    assert cfg.font_file() == font
-    assert JobConfig().font_file() is None

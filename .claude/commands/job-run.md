@@ -23,7 +23,7 @@ argument-hint: [개수]
    - 마감 지난 공고를 이번만 건너뛰면: 아무것도 하지 않는다(다음 실행 때 다시 나온다).
    - 건너뛰고 ✅로 정리하면: `agents/job-apply/bin/job skip <id> --reason expired --deadline <추출한 마감일> --mark-done`
    - 이미 처리한 공고를 건너뛰면: `agents/job-apply/bin/job skip <id> --reason duplicate`
-   - 처리할 공고는 하나씩 `/tailor` 의 **공고별 처리** 1~10단계를 그대로 한다(`.claude/commands/tailor.md`). 새로 만들기를 고른 중복 공고는 `init` 에 `--new` 를 붙인다.
+   - 처리할 공고는 하나씩 `/tailor` 의 **공고별 처리** 1~9단계를 그대로 한다(`.claude/commands/tailor.md`). 새로 만들기를 고른 중복 공고는 `init` 에 `--new` 를 붙인다.
      `complete` 가 Slack 스레드 답글, PDF 2개, ✅를 남긴다. exit 7(Slack 오류)이면 알리고, 같은 `complete` 를 다시 실행하면 빠진 단계부터 이어서 한다.
 6. 끝나면 공고별 결과 요약(완료·건너뜀·본문 요청·실패, 적합도, 폴더)을 보여 준다.
 

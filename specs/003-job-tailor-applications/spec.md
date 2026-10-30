@@ -37,6 +37,10 @@
 
 - Q: 같은 공고 URL이 이미 처리됐으면 어떻게 하나요? → A: 목록에 "이미 처리됨(폴더 위치)"으로 표시하고, 새로 만들지 사용자에게 묻는다(FR-016).
 
+### Session 2026-10-30
+
+- Q: 맞춤 이력서는 원본 양식을 따르나요? → A: 따른다. 원본 이력서는 `private/resume.docx`이고, 포트폴리오처럼 원본 사본의 문구와 표 행 순서만 바꾼 `resume.docx`를 만든 뒤 PDF로 내보낸다. 사진·표·서식은 그대로 둔다(research R7). 이전의 `resume.md`(마크다운으로 새로 쓴 이력서)는 쓰지 않는다.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - 공고 하나로 맞춤 지원 자료 만들기 (Priority: P1)
@@ -56,7 +60,7 @@ Slack 연동 없이 이것만 있어도 쓸 수 있다.
 
 1. **Given** `private/`에 원본 이력서와 포트폴리오가 있고, **When** 사용자가 공고 링크로 `/tailor`를 실행하면,
    **Then** 회사·직무·마감일을 보여 준 뒤 `applications/<날짜>_<회사>_<직무>/`에 `base/`, `job.md`, `analysis.md`,
-   `resume.md`, `resume.pdf`, `portfolio.pptx`, `portfolio.pdf`, `preview/`, `changes.md`가 생긴다.
+   `resume.docx`, `resume.pdf`, `portfolio.pptx`, `portfolio.pdf`, `preview/`, `changes.md`가 생긴다.
 2. **Given** 공고 링크 대신 공고 본문 텍스트를 넣고, **When** `/tailor`를 실행하면, **Then** 링크를 가져오는 단계 없이 같은 산출물이 만들어진다.
 3. **Given** 처리가 끝났을 때, **When** 원본 이력서·포트폴리오를 처리 전과 비교하면, **Then** 두 파일 모두 전혀 바뀌지 않았다.
 4. **Given** 맞춤 이력서·포트폴리오가 만들어졌을 때, **When** `changes.md`를 보면,
@@ -184,9 +188,9 @@ Slack 연동 없이 이것만 있어도 쓸 수 있다.
 - **FR-010**: 공고마다 `applications/<날짜>_<회사>_<직무>/` 폴더를 MUST 만들고, 아래 산출물을 모두 MUST 생성한다.
   - `job.md`: 공고 원문, 그리고 추출한 회사·직무·마감일·자격 요건·우대 사항
   - `analysis.md`: 적합도, 일치하는 점, 부족한 점, 지원 전 보완 제안
-  - `resume.md`, `resume.pdf`: 공고에 맞춘 이력서
+  - `resume.docx`, `resume.pdf`: 원본 이력서 양식을 유지한 채 문구·표 행 순서를 공고에 맞춘 이력서
   - `portfolio.pptx`, `portfolio.pdf`: 공고에 맞게 수정한 포트폴리오
-  - `preview/`: 수정한 슬라이드의 이미지
+  - `preview/`: 이력서 전체 쪽과 수정한 슬라이드의 이미지
   - `changes.md`: 원본 대비 변경 내역과 각 변경의 근거, 사용한 원본 버전 정보
 - **FR-011**: 맞춤 이력서·포트폴리오의 모든 내용(경력, 기술, 성과, 수치)은 원본 이력서·포트폴리오에 근거가 MUST 있어야 한다. 원본에 없는 내용은 MUST NOT 만든다.
 - **FR-012**: 공고가 요구하지만 원본에 없는 요건은 `analysis.md`의 부족한 점과 보완 제안에만 MUST 적는다.
