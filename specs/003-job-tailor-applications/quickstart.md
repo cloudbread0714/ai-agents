@@ -9,7 +9,7 @@ brew install --cask libreoffice          # PPTX → PDF 렌더링 (research R4)
 uv sync                                   # 레포 루트
 ```
 
-- `agents/job-apply/private/`에 `resume.pdf`, `portfolio.pptx`를 넣는다(커밋되지 않음).
+- `agents/job-apply/private/`에 `resume.docx`, `portfolio.pptx`를 넣는다(커밋되지 않음).
 - 포트폴리오가 쓰는 글꼴을 설치한다(`job doctor`가 빠진 글꼴을 알려 줌).
 - Slack 앱을 만든다.
   - 권한: `channels:history`(비공개면 `groups:history`), `reactions:read`, `reactions:write`, `chat:write`, `files:write`
@@ -82,8 +82,8 @@ JOB_RENDER=1 uv run pytest agents/job-apply -m render   # 실제 LibreOffice 렌
 
 ## 4. 원본 교체 (US5)
 
-1. `private/resume.pdf`를 다른 버전으로 바꾸고 새 공고를 `/tailor`로 처리한다.
-2. 확인할 것: 새 폴더의 `base/resume.pdf`와 `changes.md`의 원본 해시는 새 버전이고, 이전 폴더는 바뀌지 않았다.
+1. `private/resume.docx`를 다른 버전으로 바꾸고 새 공고를 `/tailor`로 처리한다.
+2. 확인할 것: 새 폴더의 `base/resume.docx`와 `changes.md`의 원본 해시는 새 버전이고, 이전 폴더는 바뀌지 않았다.
 
 ## 5. 실패 복구
 

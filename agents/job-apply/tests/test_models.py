@@ -81,7 +81,10 @@ def test_plan_valid():
         lambda d: d["portfolio"]["edits"][0].update(source=""),
         lambda d: d["portfolio"]["edits"][0].update(source="somewhere"),
         lambda d: d["portfolio"]["edits"][0].update(slide=9),
-        lambda d: d["resume"]["changes"][0].pop("reason"),
+        lambda d: d["resume"]["edits"][0].pop("reason"),
+        lambda d: d["resume"]["edits"][0].update(op={"kind": "delete"}),  # text + op
+        lambda d: d["resume"]["row_order"][0].pop("reason"),
+        lambda d: d.update(schema=1),
         lambda d: d.update(extra=1),
         lambda d: (
             d["portfolio"]["edits"][0].update(op={"kind": "insert_after"})

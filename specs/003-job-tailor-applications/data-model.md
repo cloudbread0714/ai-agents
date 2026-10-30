@@ -8,7 +8,7 @@
 
 | 필드 | 설명 |
 |------|------|
-| `resume_path` | `private/resume.pdf` (읽기 전용) |
+| `resume_path` | `private/resume.docx` (읽기 전용) |
 | `portfolio_path` | `private/portfolio.pptx` (읽기 전용) |
 | `resume_sha256`, `portfolio_sha256` | 처리 시작 시점 해시. 이것이 "원본 버전" 식별자다 |
 | `resume_mtime`, `portfolio_mtime` | 사람이 읽기 위한 참고값 |
@@ -68,19 +68,20 @@ new / body_provided ──(중복이라 건너뜀: 기존 폴더 답글 + ✅)�
 ```text
 meta.json          # 아래 필드
 base/
-  resume.pdf       # 원본 사본
-  resume.txt       # 사본에서 뽑은 텍스트(근거 자료)
+  resume.docx      # 원본 사본
+  resume.json      # 사본 문단 구조 덤프(문단 번호, 표·행·칸, resume.txt 줄, contracts/cli.md init)
+  resume.txt       # 빈 문단을 뺀 문단마다 한 줄(근거 자료)
   portfolio.pptx   # 원본 사본
   portfolio.json   # 사본 텍스트 구조 덤프(문단 id 포함, contracts/cli.md `dump`)
-  render/          # 사본 렌더링(넘침 비교 기준, 미리보기 비교용)
+  render/          # 사본 렌더링 PDF와 resume-NN.png, slide-NN.png(넘침·쪽수 비교 기준, 원본 모양)
 job.md
 analysis.md        # frontmatter: fit_score, summary
 tailor.json        # 편집 계획(contracts/tailor-plan.schema.json)
-resume.md
+resume.docx
 resume.pdf
 portfolio.pptx
 portfolio.pdf
-preview/slide-NN.png
+preview/resume-NN.png  preview/slide-NN.png
 changes.md         # tailor.json + apply 결과로 생성
 ```
 
@@ -124,7 +125,7 @@ summary: "백엔드 경험·Python은 일치, Kubernetes 운영 경험 부족"
 본문 섹션(순서 고정): `## 적합도 근거`, `## 일치하는 점`, `## 부족한 점`, `## 지원 전 보완 제안`
 
 **규칙**:
-- `부족한 점`의 요건은 resume.md·portfolio에 나오면 안 된다(FR-012). `verify`가 키워드 단위로 확인한다(아래 7).
+- `부족한 점`의 요건은 결과 이력서·포트폴리오에 나오면 안 된다(FR-012). `verify`가 키워드 단위로 확인한다(아래 7).
 - 점수 기준: 필수 요건 충족 비율 70%, 우대 사항 충족 비율 20%, 직무 연차·도메인 일치 10%. 근거 섹션에 계산을 적는다.
 - `fit_score < 40`이면 낮은 적합도다. 완료 보고(Slack 답글, `/tailor` 터미널 요약)에 "⚠️ 낮은 적합도"를 붙인다.
 
@@ -132,24 +133,27 @@ summary: "백엔드 경험·Python은 일치, Kubernetes 운영 경험 부족"
 
 전체 스키마는 [contracts/tailor-plan.schema.json](./contracts/tailor-plan.schema.json)에 있다. 요점은 다음과 같다.
 
-- `resume.changes[]`: `{section, before?, after, source, reason}`. resume.md에서 원본과 달라진 부분을 적는다.
+- `schema`: `2`. (1은 이력서를 resume.md로 새로 쓰던 이전 형식이다.)
+- `resume.edits[]`: `{paragraph, text | runs[] | op: insert_after/delete, source, reason}`. `paragraph`는 base `resume.json`의 문단 번호다. `text`의 줄 바꿈은 같은 문단 안의 줄 바꿈이 된다.
+- `resume.row_order[]`: `{table, order[], reason}`. 표 하나의 행 순서를 base 행 번호(0부터, 머리글 포함)의 순열로 적는다.
 - `portfolio.slide_order[]`: base 기준 슬라이드 번호(1부터)의 순열.
 - `portfolio.edits[]`: `{slide, shape_id, paragraph, text | runs[] | op: insert_after/delete, source, reason}`
 - `source`는 근거 위치다. 예: `resume.txt:L12-14`, `portfolio.json:s3/sh5/p0`. 빈 값은 허용하지 않는다.
-- `acknowledged_warnings[]`: `{file, token, source, reason}`. 근거 검사 경고 중 실제로는 근거가 있는 항목(동의어, 표기 차이 등)을 원본 위치와 함께 해명한다(아래 7).
+- `acknowledged_warnings[]`: `{file: resume.docx | portfolio.pptx, token, source, reason}`. 근거 검사 경고 중 실제로는 근거가 있는 항목(동의어, 표기 차이 등)을 원본 위치와 함께 해명한다(아래 7).
 
 ## 7. ChangeLog (changes.md, 생성물)
 
 `job apply`가 tailor.json과 적용 결과로 만든다. 세션이 손으로 쓰지 않는다.
 
 1. 사용한 원본: 파일별 해시 앞 12자와 mtime
-2. 이력서 변경: 표(섹션 / 전 / 후 / 근거 / 이유)
-3. 포트폴리오 슬라이드 순서: base → 결과 대응표
-4. 포트폴리오 문구 변경: 표(슬라이드 / 전 / 후 / 근거 / 이유)
-5. 렌더링 점검: 시도 횟수, 남은 문제(RenderIssue)
-6. 근거 검사 경고(아래 verify 결과)
+2. 이력서 문구 변경: 표(문단(표·행·칸) / 전 / 후 / 근거 / 이유)
+3. 이력서 표 행 순서: 표(표 / 행 순서 / 이유)
+4. 포트폴리오 슬라이드 순서: base → 결과 대응표
+5. 포트폴리오 문구 변경: 표(슬라이드 / 전 / 후 / 근거 / 이유)
+6. 렌더링 점검: 시도 횟수, 남은 문제(RenderIssue)
+7. 근거 검사 경고(아래 verify 결과)
 
-**근거 검사(`job verify`)**: 원본 텍스트(`resume.txt` + `portfolio.json`)에 없는데 resume.md나 결과 PPTX에 새로 나온 다음 항목을 찾는다.
+**근거 검사(`job verify`)**: 원본 텍스트(`resume.txt` + `portfolio.json`)에 없는데 결과 DOCX나 결과 PPTX에 새로 나온 다음 항목을 찾는다.
 - 숫자·퍼센트·연도
 - 영문 기술 토큰(대소문자 무시)
 - analysis.md `부족한 점`의 키워드
@@ -161,9 +165,10 @@ summary: "백엔드 경험·Python은 일치, Kubernetes 운영 경험 부족"
 
 | 필드 | 설명 |
 |------|------|
-| `slide` | 결과물 기준 슬라이드 번호 |
-| `shape_id` | 문제가 생긴 도형 |
+| `file` | `portfolio`(기본) / `resume` |
+| `slide` | 결과물 기준 슬라이드 번호. `file=resume`이면 이력서 쪽 번호 |
+| `shape_id` | 문제가 생긴 도형(포트폴리오만) |
 | `kind` | `overflow` / `offslide` / `overlap` / `visual`(세션이 이미지로 찾은 문제) |
 | `detail` | 넘친 정도(pt) 또는 설명 |
 
-base 렌더링에도 같은 문제(같은 도형·같은 종류)가 있으면 제외한다(research R6).
+base 렌더링에도 같은 문제(같은 도형·같은 종류)가 있으면 제외한다(research R6). 이력서는 결과 쪽수가 base보다 늘면 마지막 쪽 번호로 `overflow` 하나를 기록한다.

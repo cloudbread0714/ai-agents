@@ -32,7 +32,6 @@ def start(job, httpx_mock, url: str = URL, *extra: str) -> tuple[str, Path]:
 def ready(job, httpx_mock, **write_kw) -> Path:
     _id, folder = start(job, httpx_mock)
     session.write(folder, **write_kw)
-    assert job("resume-pdf", str(folder))[0] == 0
     code, _res, out = job("apply", str(folder))
     assert code == 0, out
     return folder

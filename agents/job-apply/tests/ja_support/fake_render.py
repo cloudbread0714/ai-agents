@@ -1,6 +1,8 @@
-"""A PPTX → PDF renderer for tests that needs no LibreOffice.
+"""A PPTX/DOCX → PDF renderer for tests that needs no LibreOffice.
 
-One page per slide in presentation order. Every text frame is drawn at its box with the
+DOCX: every paragraph in document order on A4 pages, wrapped at the text width, a new page
+when the bottom margin is reached (so a longer resume adds pages). PPTX: one page per slide
+in presentation order. Every text frame is drawn at its box with the
 default text insets; lines wrap at the box width (character-greedy, like Korean text),
 and text that does not fit keeps going past the box bottom, so overflow detection can be
 tested deterministically.
@@ -51,7 +53,37 @@ def _wrap(text: str, width: float, size: float) -> list[str]:
     return [*lines, line] if line else lines or [""]
 
 
+A4_W, A4_H, MARGIN, BODY_SIZE = 595.0, 842.0, 50.0, 11.0
+
+
+def render_docx(docx: Path, out_dir: Path) -> Path:
+    from job_apply import docx_doc
+
+    doc = pymupdf.open()
+    page = writer = None
+    y = A4_H
+    for p, _where in docx_doc.walk(docx_doc.read_document(docx)):
+        for line in _wrap(docx_doc.paragraph_text(p), A4_W - 2 * MARGIN, BODY_SIZE):
+            if y + BODY_SIZE * 1.4 > A4_H - MARGIN:
+                if writer is not None:
+                    writer.write_text(page)
+                page = doc.new_page(width=A4_W, height=A4_H)
+                writer, y = pymupdf.TextWriter(page.rect), MARGIN
+            y += BODY_SIZE * 1.4
+            if line.strip():
+                writer.append((MARGIN, y), line, font=_font(), fontsize=BODY_SIZE)
+    if writer is not None:
+        writer.write_text(page)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out = out_dir / f"{docx.stem}.pdf"
+    doc.save(out)
+    doc.close()
+    return out
+
+
 def render(pptx: Path, out_dir: Path) -> Path:
+    if pptx.suffix == ".docx":
+        return render_docx(pptx, out_dir)
     prs = Presentation(str(pptx))
     width, height = _pt(prs.slide_width), _pt(prs.slide_height)
     doc = pymupdf.open()

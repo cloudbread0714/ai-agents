@@ -76,7 +76,8 @@ class Sources(_Model):
 
 
 class RenderIssue(_Model):
-    slide: int = Field(ge=1)
+    file: Literal["portfolio", "resume"] = "portfolio"
+    slide: int = Field(ge=1)  # page number when file is "resume"
     shape_id: int | None = None
     kind: IssueKind
     detail: str
@@ -136,10 +137,9 @@ class EditOp(_Model):
     text: str | None = None
 
 
-class PortfolioEdit(_Model):
-    slide: int = Field(ge=1)
-    shape_id: int = Field(ge=0)
-    paragraph: int = Field(ge=0)
+class _TextChange(_Model):
+    """One paragraph change: exactly one of ``text``, ``runs``, ``op``."""
+
     text: str | None = None
     runs: list[str] | None = None
     op: EditOp | None = None
@@ -147,7 +147,7 @@ class PortfolioEdit(_Model):
     reason: str
 
     @model_validator(mode="after")
-    def _one_change(self) -> PortfolioEdit:
+    def _one_change(self):
         given = [x is not None for x in (self.text, self.runs, self.op)]
         if sum(given) != 1:
             raise ValueError("exactly one of text, runs, op is required")
@@ -156,16 +156,25 @@ class PortfolioEdit(_Model):
         return self
 
 
-class ResumeChange(_Model):
-    section: str
-    before: str | None = None
-    after: str
-    source: str
+class PortfolioEdit(_TextChange):
+    slide: int = Field(ge=1)
+    shape_id: int = Field(ge=0)
+    paragraph: int = Field(ge=0)
+
+
+class ResumeEdit(_TextChange):
+    paragraph: int = Field(ge=0)
+
+
+class RowOrder(_Model):
+    table: int = Field(ge=1)
+    order: list[int]
     reason: str
 
 
 class ResumePlan(_Model):
-    changes: list[ResumeChange]
+    edits: list[ResumeEdit]
+    row_order: list[RowOrder] = Field(default_factory=list)
 
 
 class PortfolioPlan(_Model):
@@ -175,14 +184,14 @@ class PortfolioPlan(_Model):
 
 
 class Acknowledged(_Model):
-    file: Literal["resume.md", "portfolio.pptx"]
+    file: Literal["resume.docx", "portfolio.pptx"]
     token: str
     source: str
     reason: str
 
 
 class TailorPlan(_Model):
-    schema_: Literal[1] = Field(alias="schema")
+    schema_: Literal[2] = Field(alias="schema")
     acknowledged_warnings: list[Acknowledged] = Field(default_factory=list)
     resume: ResumePlan
     portfolio: PortfolioPlan

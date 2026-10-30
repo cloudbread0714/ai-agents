@@ -1,4 +1,4 @@
-"""Originals in ``private/``: read-only access, hashes, base copies, resume text (FR-007–FR-009).
+"""Originals in ``private/``: read-only access, hashes, base copies (FR-007–FR-009).
 
 The CLI never writes under ``private/``. Every command runs inside :func:`guard`, which
 compares the originals' hashes at start and end; after ``init`` only ``base/`` copies are used.
@@ -13,9 +13,9 @@ from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
 
-import pymupdf
 from pptx import Presentation
 
+from job_apply import docx_doc
 from job_apply.config import Paths
 from job_apply.errors import SourceChangedError, SourceError
 from job_apply.models import SourceInfo, Sources
@@ -39,8 +39,7 @@ def check(paths: Paths) -> None:
         if not path.is_file():
             raise SourceError(f"원본이 없어요: {paths.rel(path)}")
     try:
-        with pymupdf.open(paths.resume) as doc:
-            doc.load_page(0)
+        docx_doc.read_document(paths.resume)
     except Exception as exc:  # noqa: BLE001 - any parse failure means "cannot read"
         raise SourceError(f"원본을 열 수 없어요: {paths.rel(paths.resume)} ({exc})") from None
     try:
@@ -61,7 +60,7 @@ def of_copies(paths: Paths, base: Path) -> Sources:
         return SourceInfo(sha256=sha256(copy), mtime=mtime)
 
     return Sources(
-        resume=one(base / "resume.pdf", paths.resume),
+        resume=one(base / "resume.docx", paths.resume),
         portfolio=one(base / "portfolio.pptx", paths.portfolio),
     )
 
@@ -83,15 +82,5 @@ def guard(paths: Paths) -> Iterator[None]:
 
 def copy_to_base(paths: Paths, base: Path) -> None:
     base.mkdir(parents=True, exist_ok=True)
-    shutil.copyfile(paths.resume, base / "resume.pdf")
+    shutil.copyfile(paths.resume, base / "resume.docx")
     shutil.copyfile(paths.portfolio, base / "portfolio.pptx")
-
-
-def extract_resume_text(pdf: Path, out: Path) -> list[str]:
-    """One text line per file line, so ``resume.txt:L<n>`` is line n (blank lines dropped)."""
-    lines: list[str] = []
-    with pymupdf.open(pdf) as doc:
-        for page in doc:
-            lines += [ln.strip() for ln in page.get_text().splitlines() if ln.strip()]
-    out.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    return lines

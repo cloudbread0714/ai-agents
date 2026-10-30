@@ -51,8 +51,8 @@ def test_job_sections_required(job, httpx_mock):
 
 def test_base_hash_must_match_meta(job, httpx_mock):
     folder = ready(job, httpx_mock)
-    (folder / "base" / "resume.pdf").write_bytes(b"%PDF changed")
-    assert any("base/resume.pdf" in p for p in _verify(job, folder)["problems"])
+    (folder / "base" / "resume.docx").write_bytes(b"changed")
+    assert any("base/resume.docx" in p for p in _verify(job, folder)["problems"])
 
 
 def test_provenance_warnings_and_acknowledgement(job, httpx_mock):
@@ -61,15 +61,15 @@ def test_provenance_warnings_and_acknowledgement(job, httpx_mock):
     )
     res = _verify(job, folder)
     found = {(w["file"], w["token"], w["kind"]) for w in res["unresolved"]}
-    assert ("resume.md", "Kafka", "tech") in found
-    assert ("resume.md", "40%", "number") in found
-    assert ("resume.md", "Kubernetes", "gap") in found
+    assert ("resume.docx", "Kafka", "tech") in found
+    assert ("resume.docx", "40%", "number") in found
+    assert ("resume.docx", "Kubernetes", "gap") in found
     assert res["ok"]  # warnings never fail verify itself
 
     data = session.plan(
         acknowledged=[
             {
-                "file": "resume.md",
+                "file": "resume.docx",
                 "token": "kafka",
                 "source": "resume.txt:L5",
                 "reason": "테스트용 해명 사유",
@@ -82,8 +82,8 @@ def test_provenance_warnings_and_acknowledgement(job, httpx_mock):
     assert "Kafka" not in [w["token"] for w in res["unresolved"]]
     changes = (folder / "changes.md").read_text()
     assert (
-        "해명됨: resume.md `Kafka` → resume.txt:L5" in changes
-        and "해명 안 됨: resume.md `40%`" in changes
+        "해명됨: resume.docx `Kafka` → resume.txt:L5" in changes
+        and "해명 안 됨: resume.docx `40%`" in changes
     )
 
 

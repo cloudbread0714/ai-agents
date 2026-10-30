@@ -2,7 +2,7 @@
 
 Artifacts (FR-010), analysis.md and job.md format, base copies vs ``meta.sources``, and the
 provenance check: numbers, Latin tech tokens and "부족한 점" keywords that appear in
-resume.md or the result deck but not in the base originals.
+the result resume or deck but not in the base originals.
 """
 
 from __future__ import annotations
@@ -16,7 +16,7 @@ from typing import Any
 import yaml
 from pptx import Presentation
 
-from job_apply import sources
+from job_apply import docx_doc, sources
 from job_apply.errors import PlanError
 from job_apply.models import Meta, TailorPlan, load_plan
 from job_apply.pptx_dump import all_text, dump
@@ -26,13 +26,14 @@ ARTIFACTS = (
     "job.md",
     "analysis.md",
     "tailor.json",
-    "resume.md",
+    "resume.docx",
     "resume.pdf",
     "portfolio.pptx",
     "portfolio.pdf",
     "changes.md",
-    "base/resume.pdf",
+    "base/resume.docx",
     "base/resume.txt",
+    "base/resume.json",
     "base/portfolio.pptx",
     "base/portfolio.json",
 )
@@ -176,7 +177,7 @@ def verify(folder: Path, meta: Meta) -> tuple[VerifyResult, TailorPlan | None]:
         result.missing.append("base/render/")
     base = folder / "base"
     for name, info in (
-        ("resume.pdf", meta.sources.resume),
+        ("resume.docx", meta.sources.resume),
         ("portfolio.pptx", meta.sources.portfolio),
     ):
         if (base / name).is_file() and sources.sha256(base / name) != info.sha256:
@@ -209,8 +210,9 @@ def verify(folder: Path, meta: Meta) -> tuple[VerifyResult, TailorPlan | None]:
         corpus_parts += all_text(base_dump)
     corpus = "\n".join(corpus_parts).lower()
     outputs = {}
-    if (folder / "resume.md").is_file():
-        outputs["resume.md"] = (folder / "resume.md").read_text(encoding="utf-8")
+    if (folder / "resume.docx").is_file():
+        resume = docx_doc.dump(docx_doc.read_document(folder / "resume.docx"))
+        outputs["resume.docx"] = "\n".join(docx_doc.all_text(resume))
     if (folder / "portfolio.pptx").is_file():
         outputs["portfolio.pptx"] = "\n".join(
             all_text(dump(Presentation(str(folder / "portfolio.pptx"))))

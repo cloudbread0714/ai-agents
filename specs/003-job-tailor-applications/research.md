@@ -57,11 +57,11 @@
   - PowerPoint/Keynote AppleScript 자동화: macOS 전용이고 테스트할 수 없으며 앱 상태에 좌우된다.
   - Aspose 등 상용 라이브러리: 비용이 든다.
 
-## R5. PDF → 미리보기 PNG, 원본 이력서 텍스트 추출
+## R5. PDF → 미리보기 PNG
 
 - **Decision**: `PyMuPDF`(`pymupdf` 1.24+)를 쓴다.
   - 렌더링한 portfolio.pdf에서 바뀐 슬라이드만 150dpi PNG로 저장해 `preview/slide-NN.png`를 만든다. NN은 결과물 기준 순서다.
-  - 원본 resume.pdf 텍스트도 PyMuPDF로 뽑아 `base/resume.txt`에 저장한다. 세션은 이 텍스트를 근거 자료로 쓴다.
+  - 렌더링한 resume.pdf는 모든 쪽을 `preview/resume-NN.png`로 저장한다. 쪽수 비교(R7)에도 PyMuPDF를 쓴다.
 - **Rationale**: pip 패키지 하나로 시스템 의존성 없이 PDF 읽기·렌더링·텍스트 좌표 추출(R6)을 모두 한다. 개인 로컬 도구라 AGPL 라이선스도 문제없다.
 - **Alternatives considered**:
   - `pdftoppm`(poppler): 시스템 설치가 필요하다.
@@ -81,17 +81,19 @@
 - **Rationale**: 실제 렌더링 결과를 기준으로 하므로 글꼴 메트릭을 추정할 필요가 없다. base와 비교해서 원래 디자인 의도(일부러 겹친 장식 텍스트 등)를 잘못 잡지 않는다.
 - **Alternatives considered**: Pillow 글꼴 메트릭으로 줄 수를 추정하는 방식은 PowerPoint·LibreOffice의 줄 바꿈 규칙(한글 어절 단위 등)과 어긋난다.
 
-## R7. 이력서 PDF 생성
+## R7. 이력서: 원본 DOCX를 고쳐 PDF로 내보내기
 
-- **Decision**: `resume.md` → HTML(`markdown` 3.7)로 바꾼 뒤, PyMuPDF `Story` API로 A4 PDF를 만든다.
-  - 레포에 둔 간단한 CSS 템플릿(`templates/resume.css`)을 쓴다.
-  - 한글 글꼴은 `config/job.yaml`의 `resume.font_files`(기본: Pretendard → Noto Sans KR → AppleSDGothicNeo 순으로 찾기)를 `fitz.Archive`로 넣는다.
-  - 후보가 하나도 없으면(예: Ubuntu CI) PyMuPDF 내장 CJK 글꼴(`fitz.Font("cjk")`)로 대신하고, `doctor`는 경고만 한다. 그래서 기본 테스트가 시스템 글꼴 없이 통과한다(헌법 III).
-- **Rationale**: R5와 같은 라이브러리라 시스템 의존성이 늘지 않는다.
-  - 원본 resume.pdf의 디자인을 그대로 재현하는 것은 범위 밖이다. 스펙의 산출물도 resume.md 기반이다.
+- **Decision**: 원본 이력서는 `private/resume.docx`다. 포트폴리오(R3)와 같은 방식으로 원본 사본의 텍스트만 고치고 LibreOffice로 PDF를 만든다.
+  - **구조 덤프**: `word/document.xml`을 lxml로 읽어 문단에 문서 순서대로 0부터 번호를 매긴다. 표·행·칸, 내용 컨트롤(`w:sdt`) 안으로 들어간다. `base/resume.json`에 문단 번호, 표·행·칸 위치, 텍스트, run을 적고, 빈 문단을 뺀 문단마다 한 줄씩 `base/resume.txt`를 만든다. 세션은 이 텍스트를 근거 자료로 쓴다.
+  - **적용**: 문단 단위 `text`(첫 run의 `w:rPr` 유지, 나머지 텍스트 run 삭제) / `runs`(run 개수 그대로) / `insert_after`(같은 문단 복제) / `delete`와 표 하나의 행 순서 바꾸기만 한다. 그림·개체가 든 run은 지우지 않는다. `word/document.xml`만 다시 쓰고 다른 파트는 바이트 그대로 복사한다.
+  - **디자인 보존 검사**(`docx_guard`): 다른 파트는 바이트 단위로 같아야 한다. `document.xml`은 문단을 모두 지우고 표마다 행을 정렬한 골격(표·칸·너비·테두리·구역 설정)이 같아야 하고, 그림(`w:drawing`, `w:pict`, `w:object`)과 구역(`w:sectPr`)의 목록이 같아야 하며, 결과의 모든 `w:pPr`·`w:rPr`는 base에 이미 있던 것이어야 한다.
+  - **점검**: 결과 PDF의 쪽수가 base보다 늘면 `overflow` 문제다. 줄 바꿈·칸 넘침은 세션이 `preview/resume-NN.png`로 직접 본다.
+  - **글꼴**: Windows에서 만든 이력서의 글꼴(예: 맑은 고딕)이 macOS에 없을 수 있다. `config/job.yaml`의 `render.font_substitutes`를 LibreOffice 프로필(`.job-state/lo-profile`)의 글꼴 바꾸기 표로 써서, 설치된 글꼴로 그리게 한다(항상 대체. 원본 글꼴을 설치하면 그 쌍을 지운다). 기본값 AppleGothic은 맑은 고딕 이력서를 원본과 같은 쪽수로 그린다(Apple SD Gothic Neo는 폭이 넓어 쪽이 는다). `doctor`는 원본 글꼴도 대체 글꼴도 없을 때만 경고한다.
+- **Rationale**: 원본 이력서의 양식(사진, 표, 칸 배치, 서식)을 그대로 두고 내용만 공고에 맞출 수 있다. 포트폴리오와 같은 계획(tailor.json)·검사·렌더링 흐름을 써서 세션 단계가 단순해진다. python-docx 없이 lxml(이미 python-pptx 의존성)만 쓴다.
 - **Alternatives considered**:
-  - WeasyPrint: CSS 지원은 더 좋지만 macOS에서 `pango`를 따로 설치해야 하고, iCloud venv 문제와도 겹친다.
-  - LibreOffice HTML→PDF: CSS를 거의 무시한다.
+  - 이전 방식(`resume.md` → HTML → PyMuPDF Story): 원본 디자인을 버리고 새 양식으로 그린다. 사용자가 원본 양식을 유지하길 원해 바꿨다.
+  - python-docx: 표 안 문단·내용 컨트롤·행 순서를 다루려면 결국 XML을 직접 만져야 하고, 저장할 때 다른 파트까지 다시 써서 디자인 검사가 어려워진다.
+  - Word AppleScript로 PDF 내보내기: macOS·Word 전용이고 테스트할 수 없다.
 
 ## R8. 공고 페이지 가져오기와 "가져오지 못함" 판정
 

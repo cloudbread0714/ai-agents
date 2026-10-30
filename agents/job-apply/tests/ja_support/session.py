@@ -1,8 +1,9 @@
 """Stand-ins for what the Claude Code session writes into a folder (job.md sections,
-analysis.md, resume.md, tailor.json). Contents are fictional and grounded in the samples."""
+analysis.md, tailor.json). Contents are fictional and grounded in the samples."""
 
 from __future__ import annotations
 
+import copy
 import json
 from pathlib import Path
 
@@ -42,37 +43,24 @@ summary: "Python·PostgreSQL 일치, Kubernetes 경험 부족"
 - 쿠버네티스 학습 정리
 """
 
-RESUME = """# 홍길동
-
-백엔드 개발자 · hong@example.com
-
-## 경력
-
-### 가상테크 (2021-2024)
-- Python FastAPI 기반 API 서버 설계와 운영
-- PostgreSQL 쿼리 튜닝으로 응답 시간 30% 개선
-- Docker 배포 파이프라인 구축
-{extra}
-## 기술
-
-Python, FastAPI, PostgreSQL, Docker, AWS
-"""
+RESUME_EDITS = [
+    {
+        "paragraph": 4,
+        "text": "Python FastAPI 기반 API 서버 설계·운영",
+        "source": "resume.txt:L5",
+        "reason": "공고 주요 업무에 맞춰 다듬음",
+    }
+]
+RESUME_ROW_ORDER = [{"table": 1, "order": [0, 2, 1, 3], "reason": "PostgreSQL 항목을 위로"}]
 
 
-def plan(edits=None, order=None, acknowledged=None) -> dict:
+def plan(edits=None, order=None, acknowledged=None, resume_edits=None, row_order=None) -> dict:
     return {
-        "schema": 1,
+        "schema": 2,
         "acknowledged_warnings": acknowledged or [],
         "resume": {
-            "changes": [
-                {
-                    "section": "경력",
-                    "before": "",
-                    "after": "PostgreSQL 쿼리 튜닝 항목을 위로",
-                    "source": "resume.txt:L6",
-                    "reason": "공고 자격 요건과 맞춤",
-                }
-            ]
+            "edits": copy.deepcopy(RESUME_EDITS if resume_edits is None else resume_edits),
+            "row_order": copy.deepcopy(RESUME_ROW_ORDER if row_order is None else row_order),
         },
         "portfolio": {
             "slide_order": order or [1, 2, 3, 4, 5],
@@ -93,11 +81,21 @@ def plan(edits=None, order=None, acknowledged=None) -> dict:
 
 
 def write(folder: Path, *, score: int = 72, extra: str = "", tailor: dict | None = None) -> None:
+    """``extra``: "- line" items added to the resume after its last 경력 row (paragraph 6)."""
     job = folder / "job.md"
     job.write_text(job.read_text(encoding="utf-8") + JOB_SECTIONS, encoding="utf-8")
     (folder / "analysis.md").write_text(ANALYSIS.format(score=score), encoding="utf-8")
-    (folder / "resume.md").write_text(RESUME.format(extra=extra), encoding="utf-8")
-    write_plan(folder, tailor or plan())
+    added = [
+        {
+            "paragraph": 6,
+            "op": {"kind": "insert_after", "text": line.removeprefix("- ")},
+            "source": "resume.txt:L7",
+            "reason": "테스트용 추가 문장",
+        }
+        for line in extra.splitlines()
+        if line.strip()
+    ]
+    write_plan(folder, tailor or plan(resume_edits=[*RESUME_EDITS, *added]))
 
 
 def write_plan(folder: Path, data: dict) -> None:

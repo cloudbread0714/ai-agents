@@ -4,7 +4,9 @@
 from __future__ import annotations
 
 import json
+import zipfile
 from pathlib import Path
+from xml.sax.saxutils import escape
 
 import pymupdf
 from pptx import Presentation
@@ -23,16 +25,87 @@ RESUME_LINES = [
 ]
 
 
-def make_resume_pdf(path: Path, lines: list[str] | None = None) -> Path:
-    doc = pymupdf.open()
-    page = doc.new_page()
-    y = 60
-    for line in lines or RESUME_LINES:
-        page.insert_text((50, y), line, fontname="korea", fontsize=11)
-        y += 18
+W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+_DOCX_TYPES = (
+    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+    '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
+    '<Default Extension="rels" '
+    'ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
+    '<Default Extension="xml" ContentType="application/xml"/>'
+    '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-'
+    'officedocument.wordprocessingml.document.main+xml"/>'
+    '<Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-'
+    'officedocument.wordprocessingml.styles+xml"/></Types>'
+)
+_DOCX_RELS = (
+    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+    '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/'
+    'relationships/officeDocument" Target="word/document.xml"/></Relationships>'
+)
+_DOC_RELS = (
+    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+    '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/'
+    'relationships/styles" Target="styles.xml"/></Relationships>'
+)
+_STYLES = (
+    f'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="{W_NS}">'
+    '<w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Pretendard" w:eastAsia="Pretendard"/>'
+    '<w:sz w:val="22"/></w:rPr></w:rPrDefault></w:docDefaults></w:styles>'
+)
+BOLD = "<w:rPr><w:b/></w:rPr>"
+
+
+def _p(*runs: tuple[str, bool]) -> str:
+    body = "".join(
+        f'<w:r>{BOLD if bold else ""}<w:t xml:space="preserve">{escape(text)}</w:t></w:r>'
+        for text, bold in runs
+    )
+    return f'<w:p><w:pPr><w:spacing w:after="60"/></w:pPr>{body}</w:p>'
+
+
+def _tc(*paragraphs: str) -> str:
+    return (
+        '<w:tc><w:tcPr><w:tcW w:w="9000" w:type="dxa"/></w:tcPr>' + "".join(paragraphs) + "</w:tc>"
+    )
+
+
+def make_resume_docx(path: Path, lines: list[str] | None = None) -> Path:
+    """A one-table resume: name and title, a 경력 heading, a table with one row per
+    경력 line, then 기술. ``resume.txt`` lines match ``RESUME_LINES`` in order; extra
+    ``lines`` become paragraphs at the end.
+
+    Paragraph numbers: 0 name, 1 title, 2 "경력", 3–6 table rows 0–3, 7 "기술", 8 skills.
+    """
+    lines = lines or RESUME_LINES
+    head, table_lines, tail = lines[:3], lines[3:7], lines[7:]
+    rows = "".join(f"<w:tr>{_tc(_p((text, i == 0)))}</w:tr>" for i, text in enumerate(table_lines))
+    table = (
+        '<w:tbl><w:tblPr><w:tblW w:w="9000" w:type="dxa"/><w:tblBorders>'
+        '<w:top w:val="single" w:sz="4"/></w:tblBorders></w:tblPr>'
+        f'<w:tblGrid><w:gridCol w:w="9000"/></w:tblGrid>{rows}</w:tbl>'
+    )
+    body = (
+        _p((head[0], True))
+        + _p((head[1], False))
+        + _p((head[2], True))
+        + table
+        + _p((tail[0], True))
+        + "".join(_p((t, False)) for t in tail[1:])
+        + '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/></w:sectPr>'
+    )
+    document = (
+        f'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        f'<w:document xmlns:w="{W_NS}"><w:body>{body}</w:body></w:document>'
+    )
     path.parent.mkdir(parents=True, exist_ok=True)
-    doc.save(path)
-    doc.close()
+    with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as z:
+        z.writestr("[Content_Types].xml", _DOCX_TYPES)
+        z.writestr("_rels/.rels", _DOCX_RELS)
+        z.writestr("word/_rels/document.xml.rels", _DOC_RELS)
+        z.writestr("word/styles.xml", _STYLES)
+        z.writestr("word/document.xml", document)
     return path
 
 

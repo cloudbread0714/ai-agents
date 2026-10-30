@@ -113,14 +113,13 @@ agents/job-apply/
 ├── .env.example                         # SLACK_BOT_TOKEN=
 ├── README.md
 ├── bin/job                              # uv run --package job-apply job "$@"
-├── config/job.yaml                      # slack.channel_id, resume.font_files, fetch 설정
-├── templates/resume.css
+├── config/job.yaml                      # slack.channel_id, fetch·render 설정(render.font_substitutes)
 ├── pyproject.toml
 ├── src/job_apply/
 │   ├── cli.py                           # 서브커맨드, JOB_RESULT, 종료 코드
 │   ├── config.py                        # job.yaml 모델, 경로
 │   ├── models.py                        # Posting, Meta, TailorPlan, RenderIssue (pydantic)
-│   ├── sources.py                       # 원본 확인·해시·base 복사·resume.txt 추출
+│   ├── sources.py                       # 원본 확인·해시·base 복사
 │   ├── inbox.py                         # 메시지 상태 계산, 대상 선택, ❓ 요청
 │   ├── fetch.py                         # 공고 가져오기·JSON-LD/NEXT_DATA·trafilatura·실패 판정
 │   ├── dedup.py                         # url_key 정규화, done 폴더 찾기
@@ -130,13 +129,14 @@ agents/job-apply/
 │   ├── design_guard.py                  # 디자인 보존 검사
 │   ├── render.py                        # soffice 실행(주입식), PNG 미리보기
 │   ├── layout_check.py                  # bbox 비교, base 문제 제외
-│   ├── resume_pdf.py                    # md → HTML → PyMuPDF Story
+│   ├── docx_doc.py                      # resume.json·resume.txt 덤프, 문단 교체·삽입·삭제, 표 행 순서
+│   ├── docx_guard.py                    # 이력서 디자인 보존 검사
 │   ├── changes.py                       # changes.md 생성
 │   ├── verify.py                        # 산출물·analysis 형식·근거 검사
 │   ├── report.py                        # 완료·중복·마감 답글 문구, complete 단계 재개
 │   └── doctor.py
 └── tests/
-    ├── conftest.py                      # 가상 이력서 PDF·포트폴리오 PPTX 생성, 가짜 렌더러, Slack 모킹
+    ├── conftest.py                      # 가상 이력서 DOCX·포트폴리오 PPTX 생성, 가짜 렌더러, Slack 모킹
     ├── fixtures/                        # 고정 렌더링 PDF, 공고 HTML(JSON-LD, NEXT_DATA, 로그인 벽)
     └── test_*.py                        # 모듈별 + cli 흐름(tailor·job-run) + render 마커
 ```

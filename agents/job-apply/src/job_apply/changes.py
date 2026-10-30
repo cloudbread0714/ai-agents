@@ -46,17 +46,39 @@ def _paragraph(dump: dict[str, Any], slide: int, shape_id: int, paragraph: int) 
     return None
 
 
-def issue_text(issue) -> str:
-    where = f"슬라이드 {issue.slide}" + (
+def issue_place(issue) -> str:
+    if issue.file == "resume":
+        return f"이력서 {issue.slide}쪽"
+    return f"슬라이드 {issue.slide}" + (
         f" shape {issue.shape_id}" if issue.shape_id is not None else ""
     )
-    return f"{where}: {KIND_LABEL[issue.kind]} ({issue.detail})"
+
+
+def issue_text(issue) -> str:
+    return f"{issue_place(issue)}: {KIND_LABEL[issue.kind]} ({issue.detail})"
+
+
+def _where(p: dict[str, Any] | None) -> str:
+    if p is None or p.get("table") is None:
+        return "본문"
+    return f"표 {p['table']} / 행 {p['row']} / 칸 {p['cell']}"
+
+
+def _after(e) -> str:
+    if e.text is not None:
+        return e.text
+    if e.runs is not None:
+        return "".join(e.runs)
+    if e.op and e.op.kind == "insert_after":
+        return f"(뒤에 추가) {e.op.text}"
+    return "(삭제)"
 
 
 def render(
     meta: Meta,
     plan: TailorPlan | None,
     base_dump: dict[str, Any] | None,
+    resume_dump: dict[str, Any] | None,
     warnings: dict[str, list[dict[str, Any]]] | None,
     max_attempts: int,
 ) -> str:
@@ -66,17 +88,25 @@ def render(
         [
             [name, info.sha256[:12], info.mtime.isoformat(timespec="seconds")]
             for name, info in (
-                ("resume.pdf", meta.sources.resume),
+                ("resume.docx", meta.sources.resume),
                 ("portfolio.pptx", meta.sources.portfolio),
             )
         ],
     )
-    out += ["", "## 이력서 변경", ""]
+    out += ["", "## 이력서 문구 변경", ""]
+    paragraphs = resume_dump["paragraphs"] if resume_dump else []
+    rows = []
+    for e in plan.resume.edits if plan else []:
+        p = paragraphs[e.paragraph] if e.paragraph < len(paragraphs) else None
+        before = p["text"] if p else None
+        rows.append([f"{e.paragraph} ({_where(p)})", before, _after(e), e.source, e.reason])
+    out += _table(["문단", "전", "후", "근거", "이유"], rows)
+    out += ["", "## 이력서 표 행 순서", ""]
     out += _table(
-        ["섹션", "전", "후", "근거", "이유"],
+        ["표", "행 순서(원본 기준)", "이유"],
         [
-            [c.section, c.before, c.after, c.source, c.reason]
-            for c in (plan.resume.changes if plan else [])
+            [str(r.table), ", ".join(map(str, r.order)), r.reason]
+            for r in (plan.resume.row_order if plan else [])
         ],
     )
     out += ["", "## 포트폴리오 슬라이드 순서", ""]
@@ -93,19 +123,11 @@ def render(
     rows = []
     for e in plan.portfolio.edits if plan else []:
         before = _paragraph(base_dump, e.slide, e.shape_id, e.paragraph) if base_dump else None
-        if e.text is not None:
-            after = e.text
-        elif e.runs is not None:
-            after = "".join(e.runs)
-        elif e.op and e.op.kind == "insert_after":
-            after = f"(뒤에 추가) {e.op.text}"
-        else:
-            after = "(삭제)"
         rows.append(
             [
                 f"{e.slide} / shape {e.shape_id} / 문단 {e.paragraph}",
                 before,
-                after,
+                _after(e),
                 e.source,
                 e.reason,
             ]
@@ -130,8 +152,11 @@ def render(
 
 
 def write(folder: Path, meta: Meta, plan: TailorPlan | None, warnings, max_attempts: int) -> None:
-    dump_path = folder / "base" / "portfolio.json"
-    base_dump = json.loads(dump_path.read_text(encoding="utf-8")) if dump_path.is_file() else None
+    def load(name: str) -> dict[str, Any] | None:
+        path = folder / "base" / name
+        return json.loads(path.read_text(encoding="utf-8")) if path.is_file() else None
+
     (folder / "changes.md").write_text(
-        render(meta, plan, base_dump, warnings, max_attempts), encoding="utf-8"
+        render(meta, plan, load("portfolio.json"), load("resume.json"), warnings, max_attempts),
+        encoding="utf-8",
     )

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
@@ -25,10 +24,6 @@ class SlackConfig(_Strict):
     channel_id: str = ""
 
 
-class ResumeConfig(_Strict):
-    font_files: list[str] = Field(default_factory=list)
-
-
 class FetchConfig(_Strict):
     timeout_s: float = 15
     min_chars: int = 400
@@ -40,21 +35,15 @@ class RenderConfig(_Strict):
     max_attempts: int = 3
     overflow_tolerance_pt: float = 4
     preview_dpi: int = 150
+    # Font name in the originals → installed font LibreOffice draws instead (e.g. a Windows
+    # font such as 맑은 고딕 on macOS). Without a pair, LibreOffice picks its own fallback.
+    font_substitutes: dict[str, str] = Field(default_factory=dict)
 
 
 class JobConfig(_Strict):
     slack: SlackConfig = Field(default_factory=SlackConfig)
-    resume: ResumeConfig = Field(default_factory=ResumeConfig)
     fetch: FetchConfig = Field(default_factory=FetchConfig)
     render: RenderConfig = Field(default_factory=RenderConfig)
-
-    def font_file(self) -> Path | None:
-        """First resume font that exists, or None (→ built-in CJK font)."""
-        for name in self.resume.font_files:
-            path = Path(os.path.expanduser(name))
-            if path.is_file():
-                return path
-        return None
 
 
 @dataclass(frozen=True)
@@ -67,7 +56,7 @@ class Paths:
 
     @property
     def resume(self) -> Path:
-        return self.private / "resume.pdf"
+        return self.private / "resume.docx"
 
     @property
     def portfolio(self) -> Path:
@@ -92,10 +81,6 @@ class Paths:
     @property
     def lo_profile(self) -> Path:
         return self.state / "lo-profile"
-
-    @property
-    def templates(self) -> Path:
-        return self.root / "templates"
 
     @property
     def config_file(self) -> Path:

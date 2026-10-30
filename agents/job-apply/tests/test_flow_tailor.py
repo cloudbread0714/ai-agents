@@ -38,10 +38,10 @@ def test_tailor_end_to_end(job, httpx_mock):
     _id, folder = _start(job, httpx_mock)
     assert folder.name == "2026-10-27_가상테크_백엔드-개발자"
     session.write(folder)
-    assert job("resume-pdf", str(folder))[0] == 0
     code, applied, out = job("apply", str(folder))
     assert code == 0, out
-    assert applied["attempt"] == 1 and applied["previews"] == ["preview/slide-02.png"]
+    assert applied["attempt"] == 1
+    assert applied["previews"] == ["preview/resume-01.png", "preview/slide-02.png"]
     code, ver, out = job("verify", str(folder))
     assert code == 0 and ver["ok"] and ver["unresolved"] == [], out
     code, done, out = job("complete", str(folder))
@@ -51,13 +51,17 @@ def test_tailor_end_to_end(job, httpx_mock):
         "job.md",
         "analysis.md",
         "tailor.json",
-        "resume.md",
+        "resume.docx",
         "resume.pdf",
         "portfolio.pptx",
         "portfolio.pdf",
         "changes.md",
         "preview/slide-02.png",
+        "preview/resume-01.png",
         "base/render/portfolio.pdf",
+        "base/render/resume.pdf",
+        "base/render/resume-01.png",
+        "base/resume.json",
     ):
         assert (folder / name).is_file(), name
     meta = json.loads((folder / "meta.json").read_text())
@@ -79,7 +83,7 @@ def test_unsupported_claim_blocks_complete_until_acknowledged(job, httpx_mock):
         session.plan(
             acknowledged=[
                 {
-                    "file": "resume.md",
+                    "file": "resume.docx",
                     "token": "Kafka",
                     "source": "resume.txt:L5",
                     "reason": "원본의 이벤트 처리 경험 표기",
@@ -147,7 +151,6 @@ def test_done_folder_is_never_modified(job, httpx_mock):
     assert job("complete", str(folder))[0] == 0
     for cmd in (
         ("apply", str(folder)),
-        ("resume-pdf", str(folder)),
         ("note-issue", str(folder), "--slide", "1", "--detail", "x"),
     ):
         assert job(*cmd)[0] == 2
@@ -175,7 +178,6 @@ def test_render_loop_up_to_three_attempts(job, httpx_mock):
 
     _id, folder = start(job, httpx_mock)
     session.write(folder, tailor=session.plan(edits=_small_edit(LONG)))
-    assert job("resume-pdf", str(folder))[0] == 0
     code, res, _ = job("apply", str(folder))
     assert code == 3 and res["attempt"] == 1
     assert [(i["slide"], i["shape_id"], i["kind"]) for i in res["issues"]] == [(2, 4, "overflow")]
@@ -199,3 +201,29 @@ def test_render_loop_up_to_three_attempts(job, httpx_mock):
     assert "시도 3/3" in changes and "글자 넘침" in changes and "줄 간격이 어색함" in changes
     code, done, _ = job("complete", str(folder))
     assert code == 0 and done["remaining_issues"] == 2
+
+
+def test_longer_resume_is_an_issue_and_pages_can_be_noted(job, httpx_mock):
+    from ja_support.flow import start
+
+    _id, folder = start(job, httpx_mock)
+    filler = [
+        {
+            "paragraph": 6,
+            "op": {"kind": "insert_after", "text": "Docker 배포 파이프라인 구축"},
+            "source": "resume.txt:L7",
+            "reason": "테스트용 반복 문단",
+        }
+    ] * 60
+    session.write(folder, tailor=session.plan(resume_edits=filler))
+    code, res, _ = job("apply", str(folder))
+    assert code == 3
+    [issue] = res["issues"]
+    assert (issue["file"], issue["slide"], issue["kind"]) == ("resume", 2, "overflow")
+    assert res["previews"][:2] == ["preview/resume-01.png", "preview/resume-02.png"]
+
+    session.write_plan(folder, session.plan())
+    assert job("apply", str(folder))[0] == 0
+    assert not (folder / "preview" / "resume-02.png").exists()
+    assert job("note-issue", str(folder), "--page", "1", "--detail", "줄 바꿈이 어색함")[0] == 0
+    assert "이력서 1쪽: 눈으로 확인 (줄 바꿈이 어색함)" in (folder / "changes.md").read_text()

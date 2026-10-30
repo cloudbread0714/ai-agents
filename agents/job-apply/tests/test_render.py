@@ -6,9 +6,9 @@ import pymupdf
 import pytest
 
 from ja_support.fake_render import render as fake_render
-from ja_support.samples import make_portfolio_pptx
+from ja_support.samples import make_portfolio_pptx, make_resume_docx
 from job_apply.errors import EnvNotReady, RenderError
-from job_apply.render import SofficeRenderer, render_previews, soffice_env
+from job_apply.render import SofficeRenderer, font_registry, render_previews, soffice_env
 
 
 class FakeRun:
@@ -34,6 +34,17 @@ def test_soffice_command_profile_and_timeout(tmp_path):
     assert cmd[2] == f"-env:UserInstallation={(tmp_path / 'lo').resolve().as_uri()}"
     assert cmd[3:7] == ["--convert-to", "pdf", "--outdir", str(tmp_path / "out")]
     assert kw["timeout"] == 7 and pdf == tmp_path / "out" / "deck.pdf"
+
+
+def test_font_substitutes_go_into_the_profile(tmp_path):
+    subs = {"맑은 고딕": "Apple SD Gothic Neo", "A&B": "C"}
+    r = SofficeRenderer(tmp_path / "lo", font_substitutes=subs, run=FakeRun(), which=lambda n: "x")
+    r.to_pdf(tmp_path / "resume.docx", tmp_path / "out")
+    xcu = (tmp_path / "lo" / "user" / "registrymodifications.xcu").read_text()
+    assert xcu == font_registry(subs)
+    assert "<value>맑은 고딕</value>" in xcu and "<value>A&amp;B</value>" in xcu
+    assert "<value>true</value></prop></item>" in xcu
+    assert "<value>false</value></prop></item>" in font_registry({})
 
 
 def test_macos_uses_osx_backend_for_system_fonts(monkeypatch):
@@ -120,3 +131,15 @@ def test_real_libreoffice_overflow_detected_and_base_overlap_ignored(tmp_path):
     )
     assert any(i.kind == "overflow" and i.slide == 2 and i.shape_id == 4 for i in issues)
     assert not any(i.slide == 4 for i in issues)
+
+
+@render
+@pytest.mark.render
+def test_real_libreoffice_converts_resume_docx(tmp_path):
+    from ja_support.samples import RESUME_LINES
+
+    docx = make_resume_docx(tmp_path / "resume.docx")
+    pdf = SofficeRenderer(tmp_path / "lo").to_pdf(docx, tmp_path / "out")
+    with pymupdf.open(pdf) as doc:
+        pages, text = doc.page_count, "".join(doc[0].get_text().split())
+    assert pages == 1 and "".join(RESUME_LINES[5].split()) in text

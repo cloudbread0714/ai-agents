@@ -17,7 +17,6 @@
       "Bash(agents/job-apply/bin/job doctor:*)",
       "Bash(agents/job-apply/bin/job fetch:*)",
       "Bash(agents/job-apply/bin/job init:*)",
-      "Bash(agents/job-apply/bin/job resume-pdf:*)",
       "Bash(agents/job-apply/bin/job apply:*)",
       "Bash(agents/job-apply/bin/job note-issue:*)",
       "Bash(agents/job-apply/bin/job verify:*)",
