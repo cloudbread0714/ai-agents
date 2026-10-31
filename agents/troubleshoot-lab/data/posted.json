@@ -73,7 +73,9 @@
       "ts": "1793328994.920759",
       "outcome": "open",
       "resolved_at": null,
-      "reminders": [],
+      "reminders": [
+        "2026-10-31"
+      ],
       "reposted_at": null
     }
   ],
