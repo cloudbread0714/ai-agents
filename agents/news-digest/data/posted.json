@@ -60,6 +60,16 @@
       "source": "AWS Machine Learning Blog",
       "posted_at": "2026-10-30T02:07:45.275441Z",
       "posted_date_kst": "2026-10-30"
+    },
+    {
+      "article_id": "f8234c1df9b11d67",
+      "url": "https://binarysecurity.no/posts/2026/10/one-root-case",
+      "title": "Azure's Weakest Link – Five Full Cross-Tenant Compromises",
+      "title_ko": "Azure 단일 근본 원인으로 테넌트 간 완전 침해 5건이 발견된 사례",
+      "category": "infra",
+      "source": "Hacker News",
+      "posted_at": "2026-10-31T01:46:33.099119Z",
+      "posted_date_kst": "2026-10-31"
     }
   ]
 }
