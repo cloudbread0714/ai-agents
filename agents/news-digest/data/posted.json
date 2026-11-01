@@ -70,6 +70,16 @@
       "source": "Hacker News",
       "posted_at": "2026-10-31T01:46:33.099119Z",
       "posted_date_kst": "2026-10-31"
+    },
+    {
+      "article_id": "5545fe355a55d4d0",
+      "url": "https://atlasum.net/blog/cve-2026-98432-linux-ipv4-tcp-uaf",
+      "title": "TCP Use-After-Free: CVE-2026-98432 / CVSS 9.8",
+      "title_ko": "Linux IPv4 TCP use-after-free 취약점 CVE-2026-98432(CVSS 9.8) 공개",
+      "category": "infra",
+      "source": "Hacker News",
+      "posted_at": "2026-11-01T01:26:08.520966Z",
+      "posted_date_kst": "2026-11-01"
     }
   ]
 }
