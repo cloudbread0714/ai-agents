@@ -74,10 +74,16 @@
       "outcome": "open",
       "resolved_at": null,
       "reminders": [
-        "2026-10-31"
+        "2026-10-31",
+        "2026-11-01"
       ],
       "reposted_at": null
     }
   ],
-  "weekly": []
+  "weekly": [
+    {
+      "week_start_kst": "2026-10-26",
+      "posted_at": "2026-11-01T02:33:40.773758Z"
+    }
+  ]
 }
