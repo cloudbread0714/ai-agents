@@ -80,6 +80,16 @@
       "source": "Hacker News",
       "posted_at": "2026-11-01T01:26:08.520966Z",
       "posted_date_kst": "2026-11-01"
+    },
+    {
+      "article_id": "24c1285ad5edaaad",
+      "url": "https://aws.amazon.com/blogs/machine-learning/preview-web-apps-live-as-your-coding-agent-builds-them-with-amazon-bedrock-agentcore-runtime",
+      "title": "Preview web apps live as your coding agent builds them with Amazon Bedrock AgentCore runtime",
+      "title_ko": "AgentCore 런타임에서 코딩 에이전트가 만드는 웹앱을 실시간으로 미리보기하는 방법",
+      "category": "ai_agent",
+      "source": "AWS Machine Learning Blog",
+      "posted_at": "2026-11-02T01:46:51.402912Z",
+      "posted_date_kst": "2026-11-02"
     }
   ]
 }
