@@ -90,6 +90,16 @@
       "source": "AWS Machine Learning Blog",
       "posted_at": "2026-11-02T01:46:51.402912Z",
       "posted_date_kst": "2026-11-02"
+    },
+    {
+      "article_id": "81a05a5d9bd4a463",
+      "url": "https://freenode.net/article/ubuntu-lts-kernels-still-unfixed-for-critical-cve-2026-98432",
+      "title": "Ubuntu still has not released patch for Linux 0day RCE in almost 3 weeks",
+      "title_ko": "Ubuntu, 리눅스 커널 critical 취약점(0day RCE) 패치 지연 보고",
+      "category": "infra",
+      "source": "Hacker News",
+      "posted_at": "2026-11-03T03:41:37.615775Z",
+      "posted_date_kst": "2026-11-03"
     }
   ]
 }
