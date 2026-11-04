@@ -100,6 +100,16 @@
       "source": "Hacker News",
       "posted_at": "2026-11-03T03:41:37.615775Z",
       "posted_date_kst": "2026-11-03"
+    },
+    {
+      "article_id": "210b26f029f33a3e",
+      "url": "https://github.com/postmanlabs/postman-app-support/issues/14370",
+      "title": "Postman silently auto-installs AI plugins and attempts to share all API data",
+      "title_ko": "Postman이 AI 플러그인을 무단 설치하고 API 데이터 공유를 시도한다는 보고",
+      "category": "infra",
+      "source": "Hacker News",
+      "posted_at": "2026-11-04T02:40:34.975328Z",
+      "posted_date_kst": "2026-11-04"
     }
   ]
 }
