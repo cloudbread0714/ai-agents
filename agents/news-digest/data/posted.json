@@ -120,6 +120,16 @@
       "source": "LangChain Blog",
       "posted_at": "2026-11-05T02:45:30.285160Z",
       "posted_date_kst": "2026-11-05"
+    },
+    {
+      "article_id": "fcd56e3650d63cb6",
+      "url": "https://aws.amazon.com/about-aws/whats-new/2026/11/security-hub-sbom-inventory",
+      "title": "AWS Security Hub now provides an SBOM inventory for your compute resources",
+      "title_ko": "AWS Security Hub, 컴퓨트 리소스용 SBOM 인벤토리 제공 시작",
+      "category": "infra",
+      "source": "AWS What's New",
+      "posted_at": "2026-11-06T02:48:31.707977Z",
+      "posted_date_kst": "2026-11-06"
     }
   ]
 }
