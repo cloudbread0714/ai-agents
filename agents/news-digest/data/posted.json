@@ -130,6 +130,16 @@
       "source": "AWS What's New",
       "posted_at": "2026-11-06T02:48:31.707977Z",
       "posted_date_kst": "2026-11-06"
+    },
+    {
+      "article_id": "129a84d587c36377",
+      "url": "https://docker.com/blog/docker-sandboxes-vs-containers",
+      "title": "Docker Sandboxes vs. Containers: Choosing the Right Isolation for AI Agents",
+      "title_ko": "AI 에이전트 실행 환경 격리: Docker Sandboxes와 컨테이너의 차이",
+      "category": "infra",
+      "source": "Docker Blog",
+      "posted_at": "2026-11-07T02:20:20.811478Z",
+      "posted_date_kst": "2026-11-07"
     }
   ]
 }
