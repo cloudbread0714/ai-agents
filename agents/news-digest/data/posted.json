@@ -140,6 +140,16 @@
       "source": "Docker Blog",
       "posted_at": "2026-11-07T02:20:20.811478Z",
       "posted_date_kst": "2026-11-07"
+    },
+    {
+      "article_id": "10bdc73097cfd238",
+      "url": "https://apiiro.com/blog/coding-agents-leaking-secrets-github-dont-ask-again",
+      "title": "Claude Code's \"Don't Ask Again\" exposes passwords in 1,122 public GitHub files",
+      "title_ko": "Claude Code의 'Don't Ask Again' 기능으로 공개 GitHub 파일 1,122건에 비밀번호 노출",
+      "category": "ai_agent",
+      "source": "Hacker News",
+      "posted_at": "2026-11-08T01:46:19.911302Z",
+      "posted_date_kst": "2026-11-08"
     }
   ]
 }
