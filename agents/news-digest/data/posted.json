@@ -150,6 +150,16 @@
       "source": "Hacker News",
       "posted_at": "2026-11-08T01:46:19.911302Z",
       "posted_date_kst": "2026-11-08"
+    },
+    {
+      "article_id": "1109c7dc5eeb2202",
+      "url": "https://aws.amazon.com/blogs/machine-learning/serverless-mcp-server-for-ai-agent-data-lake-access-on-amazon-ecs-fargate",
+      "title": "Serverless MCP server for AI agent data lake access on Amazon ECS Fargate",
+      "title_ko": "AI 에이전트의 데이터 레이크 접근을 위한 ECS Fargate 기반 서버리스 MCP 서버",
+      "category": "ai_agent",
+      "source": "AWS Machine Learning Blog",
+      "posted_at": "2026-11-09T01:56:31.600123Z",
+      "posted_date_kst": "2026-11-09"
     }
   ]
 }
