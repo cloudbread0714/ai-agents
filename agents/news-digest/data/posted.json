@@ -160,6 +160,16 @@
       "source": "AWS Machine Learning Blog",
       "posted_at": "2026-11-09T01:56:31.600123Z",
       "posted_date_kst": "2026-11-09"
+    },
+    {
+      "article_id": "6a0c8e4597815d41",
+      "url": "https://aws.amazon.com/about-aws/whats-new/2026/11/amazon-cloudwatch-log-retention",
+      "title": "Amazon CloudWatch Logs announces account-level retention policies",
+      "title_ko": "Amazon CloudWatch Logs, 계정 단위 로그 보존 정책 지원",
+      "category": "infra",
+      "source": "AWS What's New",
+      "posted_at": "2026-11-10T04:17:58.795363Z",
+      "posted_date_kst": "2026-11-10"
     }
   ]
 }
