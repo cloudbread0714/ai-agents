@@ -170,6 +170,16 @@
       "source": "AWS What's New",
       "posted_at": "2026-11-10T04:17:58.795363Z",
       "posted_date_kst": "2026-11-10"
+    },
+    {
+      "article_id": "c86625a4ba80cd1d",
+      "url": "https://aws.amazon.com/about-aws/whats-new/2026/11/amazon-opensearch-service-managed-cross-region-disaster-recovery",
+      "title": "Amazon OpenSearch Service announces managed cross-Region disaster recovery",
+      "title_ko": "Amazon OpenSearch Service, 관리형 리전 간 재해 복구 기능 출시",
+      "category": "infra",
+      "source": "AWS What's New",
+      "posted_at": "2026-11-11T02:13:17.942067Z",
+      "posted_date_kst": "2026-11-11"
     }
   ]
 }
