@@ -190,6 +190,16 @@
       "source": "AWS Machine Learning Blog",
       "posted_at": "2026-11-12T03:19:53.219432Z",
       "posted_date_kst": "2026-11-12"
+    },
+    {
+      "article_id": "b603ae3c0fc62154",
+      "url": "https://aws.amazon.com/blogs/machine-learning/run-agents-securely-and-efficiently-with-the-next-generation-agentcore-runtime",
+      "title": "Run agents securely and efficiently with the next generation AgentCore runtime",
+      "title_ko": "차세대 Amazon Bedrock AgentCore 런타임으로 에이전트를 안전하고 효율적으로 실행하기",
+      "category": "ai_agent",
+      "source": "AWS Machine Learning Blog",
+      "posted_at": "2026-11-13T02:52:54.526115Z",
+      "posted_date_kst": "2026-11-13"
     }
   ]
 }
