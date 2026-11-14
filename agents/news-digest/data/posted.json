@@ -200,6 +200,16 @@
       "source": "AWS Machine Learning Blog",
       "posted_at": "2026-11-13T02:52:54.526115Z",
       "posted_date_kst": "2026-11-13"
+    },
+    {
+      "article_id": "29174b9dea6ccb00",
+      "url": "https://aws.amazon.com/about-aws/whats-new/2026/11/aws-batch-eks-security-context",
+      "title": "AWS Batch on Amazon EKS adds Linux capabilities, seccomp, and pod-level settings",
+      "title_ko": "AWS Batch on EKS에 Linux capabilities, seccomp, Pod 수준 보안 설정 추가",
+      "category": "infra",
+      "source": "AWS What's New",
+      "posted_at": "2026-11-14T02:40:16.250746Z",
+      "posted_date_kst": "2026-11-14"
     }
   ]
 }
