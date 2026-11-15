@@ -210,6 +210,16 @@
       "source": "AWS What's New",
       "posted_at": "2026-11-14T02:40:16.250746Z",
       "posted_date_kst": "2026-11-14"
+    },
+    {
+      "article_id": "cd8fc130788a632d",
+      "url": "https://aws.amazon.com/blogs/machine-learning/route-coding-agent-requests-to-the-right-model-on-amazon-bedrock-with-nvidia-nemo-switchyard",
+      "title": "Route coding agent requests to the right model on Amazon Bedrock with NVIDIA NeMo Switchyard",
+      "title_ko": "코딩 에이전트 요청을 해결 작업당 비용 기준으로 Bedrock 모델에 라우팅하기",
+      "category": "ai_agent",
+      "source": "AWS Machine Learning Blog",
+      "posted_at": "2026-11-15T02:06:08.728736Z",
+      "posted_date_kst": "2026-11-15"
     }
   ]
 }
