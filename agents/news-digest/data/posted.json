@@ -220,6 +220,16 @@
       "source": "AWS Machine Learning Blog",
       "posted_at": "2026-11-15T02:06:08.728736Z",
       "posted_date_kst": "2026-11-15"
+    },
+    {
+      "article_id": "2f429c1a2fc201bc",
+      "url": "https://aws.amazon.com/blogs/machine-learning/architecture-patterns-for-fast-session-startup-on-amazon-bedrock-agentcore-runtime",
+      "title": "Architecture patterns for fast session startup on Amazon Bedrock AgentCore runtime",
+      "title_ko": "Amazon Bedrock AgentCore 런타임의 빠른 세션 시작을 위한 아키텍처 패턴",
+      "category": "ai_agent",
+      "source": "AWS Machine Learning Blog",
+      "posted_at": "2026-11-16T02:22:42.537213Z",
+      "posted_date_kst": "2026-11-16"
     }
   ]
 }
