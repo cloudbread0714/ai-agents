@@ -230,6 +230,16 @@
       "source": "AWS Machine Learning Blog",
       "posted_at": "2026-11-16T02:22:42.537213Z",
       "posted_date_kst": "2026-11-16"
+    },
+    {
+      "article_id": "543ba38e838b32e4",
+      "url": "https://blog.report-uri.com/worlds-largest-brands-infected-with-malware-via-optimizely",
+      "title": "Optimizely compromised, served malware on Zoom, GitLab",
+      "title_ko": "Optimizely 침해로 Zoom·GitLab 등 대형 브랜드에 악성코드 유포",
+      "category": "infra",
+      "source": "Hacker News",
+      "posted_at": "2026-11-17T04:45:29.992041Z",
+      "posted_date_kst": "2026-11-17"
     }
   ]
 }
