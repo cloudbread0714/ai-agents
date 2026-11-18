@@ -240,6 +240,16 @@
       "source": "Hacker News",
       "posted_at": "2026-11-17T04:45:29.992041Z",
       "posted_date_kst": "2026-11-17"
+    },
+    {
+      "article_id": "6ece0df5b64b652f",
+      "url": "https://calif.io/java4shell",
+      "title": "Java4Shell: RCE in OpenJDK when processing Base64",
+      "title_ko": "OpenJDK의 Base64 처리 과정에서 원격 코드 실행이 가능한 Java4Shell 취약점 공개",
+      "category": "infra",
+      "source": "Hacker News",
+      "posted_at": "2026-11-18T03:50:35.645669Z",
+      "posted_date_kst": "2026-11-18"
     }
   ]
 }
