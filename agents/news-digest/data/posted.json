@@ -250,6 +250,16 @@
       "source": "Hacker News",
       "posted_at": "2026-11-18T03:50:35.645669Z",
       "posted_date_kst": "2026-11-18"
+    },
+    {
+      "article_id": "913b45050bfc4e95",
+      "url": "https://aws.amazon.com/blogs/machine-learning/connect-amazon-bedrock-agentcore-gateway-to-private-apis-in-a-hub-and-spoke-network-with-centralized-inspection",
+      "title": "Connect Amazon Bedrock AgentCore Gateway to private APIs in a hub-and-spoke network with centralized inspection",
+      "title_ko": "Amazon Bedrock AgentCore Gateway를 중앙 검사형 허브-스포크 네트워크의 프라이빗 API 및 MCP 서버에 연결하는 패턴",
+      "category": "ai_agent",
+      "source": "AWS Machine Learning Blog",
+      "posted_at": "2026-11-19T03:49:01.346701Z",
+      "posted_date_kst": "2026-11-19"
     }
   ]
 }
