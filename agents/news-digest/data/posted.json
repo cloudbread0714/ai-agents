@@ -260,6 +260,16 @@
       "source": "AWS Machine Learning Blog",
       "posted_at": "2026-11-19T03:49:01.346701Z",
       "posted_date_kst": "2026-11-19"
+    },
+    {
+      "article_id": "2a88a4ebc7782ab6",
+      "url": "https://docker.com/blog/docker-patches-java4shell-and-the-nginx-http-2-with-docker-hardened-images",
+      "title": "Docker patches Java4Shell and the NGINX HTTP/2 with Docker Hardened Images",
+      "title_ko": "Docker, Hardened Images에서 Java4Shell과 NGINX HTTP/2 취약점 패치 이미지 제공",
+      "category": "infra",
+      "source": "Docker Blog",
+      "posted_at": "2026-11-20T03:42:39.809700Z",
+      "posted_date_kst": "2026-11-20"
     }
   ]
 }
