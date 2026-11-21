@@ -270,6 +270,16 @@
       "source": "Docker Blog",
       "posted_at": "2026-11-20T03:42:39.809700Z",
       "posted_date_kst": "2026-11-20"
+    },
+    {
+      "article_id": "538c74072d65321a",
+      "url": "https://aws.amazon.com/about-aws/whats-new/2026/11/cloudwatch-eks-kubernetes-tools",
+      "title": "Amazon CloudWatch EKS Container Insights now offers built-in monitoring for open source Kubernetes tools",
+      "title_ko": "Amazon CloudWatch, EKS에서 Karpenter·KEDA·vLLM 등 오픈소스 도구 모니터링 기본 제공",
+      "category": "infra",
+      "source": "AWS What's New",
+      "posted_at": "2026-11-21T03:26:50.414384Z",
+      "posted_date_kst": "2026-11-21"
     }
   ]
 }
