@@ -280,6 +280,16 @@
       "source": "AWS What's New",
       "posted_at": "2026-11-21T03:26:50.414384Z",
       "posted_date_kst": "2026-11-21"
+    },
+    {
+      "article_id": "f6e744ab21c05ceb",
+      "url": "https://aws.amazon.com/blogs/machine-learning/cut-self-hosted-llm-cost-and-latency-with-the-distributed-kv-caching-agent-skill",
+      "title": "Cut self-hosted LLM cost and latency with the distributed KV caching agent skill",
+      "title_ko": "ElastiCache 분산 KV 캐싱으로 셀프 호스팅 LLM 비용과 지연 줄이기",
+      "category": "ai_agent",
+      "source": "AWS Machine Learning Blog",
+      "posted_at": "2026-11-22T02:37:48.701404Z",
+      "posted_date_kst": "2026-11-22"
     }
   ]
 }
